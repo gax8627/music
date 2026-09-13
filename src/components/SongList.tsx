@@ -214,6 +214,7 @@ export default function SongList({
                     isPlaying={isActive && isPlaying}
                     trackNumber={originalIdx + 1}
                     bgGradient={song.bgGradient}
+                    title={song.title}
                     size="sm"
                   />
 
