@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
-import { Play, Pause, Search, Heart, Headphones, Calendar, ArrowUpDown, Shuffle, Repeat } from 'lucide-react';
+import { Play, Pause, Search, Heart, Headphones, Calendar, ArrowUpDown } from 'lucide-react';
 import { Song } from './Card';
+import { PremiumShuffleIcon, PremiumLoopIcon, PremiumShareIcon } from './PremiumIcons';
 
 export interface SongListProps {
   songs: Song[];
@@ -12,6 +13,7 @@ export interface SongListProps {
   onToggleShuffle?: () => void;
   isLoopForever?: boolean;
   onToggleLoopForever?: () => void;
+  onShare?: (songId: string) => void;
 }
 
 export default function SongList({
@@ -24,6 +26,7 @@ export default function SongList({
   onToggleShuffle,
   isLoopForever = true,
   onToggleLoopForever,
+  onShare,
 }: SongListProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [likedMap, setLikedMap] = useState<Record<string, boolean>>({});
@@ -85,12 +88,12 @@ export default function SongList({
             aria-label="Toggle shuffle"
             className={`liquid-glass rounded-xl px-3 py-2 text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer shrink-0 ${
               isShuffle
-                ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30'
+                ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30 font-semibold'
                 : 'text-white hover:bg-white/15'
             }`}
             title="Toggle shuffle mode"
           >
-            <Shuffle size={13} className={isShuffle ? 'animate-pulse' : ''} />
+            <PremiumShuffleIcon size={13} className={isShuffle ? 'animate-pulse' : ''} />
             <span className="hidden sm:inline">Shuffle</span>
           </button>
 
@@ -101,12 +104,12 @@ export default function SongList({
             aria-label="Toggle loop all"
             className={`liquid-glass rounded-xl px-3 py-2 text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer shrink-0 ${
               isLoopForever
-                ? 'bg-emerald-600/90 text-white shadow-md shadow-emerald-500/30'
+                ? 'bg-emerald-600/90 text-white shadow-md shadow-emerald-500/30 font-semibold'
                 : 'text-white hover:bg-white/15'
             }`}
             title="Toggle continuous loop of all 33 songs"
           >
-            <Repeat size={13} />
+            <PremiumLoopIcon size={13} />
             <span className="hidden sm:inline">Loop All</span>
           </button>
 
@@ -243,6 +246,22 @@ export default function SongList({
                   <span className="text-xs font-mono text-white/60 w-12 text-right">
                     {song.durationFormatted || '02:54'}
                   </span>
+
+                  {/* Share button */}
+                  {onShare && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onShare(song.id);
+                      }}
+                      aria-label="Share song"
+                      title="Share private link"
+                      className="p-1.5 text-white/40 hover:text-blue-400 transition-colors cursor-pointer"
+                    >
+                      <PremiumShareIcon size={14} />
+                    </button>
+                  )}
 
                   {/* Heart / Favorite */}
                   <button

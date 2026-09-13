@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect, useCallback, useLayoutEffect } from 'react';
 import { motion, useMotionValue } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Shuffle, Repeat } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Card, { Song } from './Card';
 import { tracks as DEFAULT_TRACKS } from '../data/tracks';
+import { PremiumShuffleIcon, PremiumLoopIcon } from './PremiumIcons';
 
 export const SONGS: Song[] = DEFAULT_TRACKS;
 
@@ -20,6 +21,7 @@ export interface DeckPlayerProps {
   onToggleLoopForever?: () => void;
   onNext?: () => void;
   onPrev?: () => void;
+  onShare?: (songId: string) => void;
 }
 
 export default function DeckPlayer({
@@ -36,6 +38,7 @@ export default function DeckPlayer({
   onToggleLoopForever,
   onNext,
   onPrev,
+  onShare,
 }: DeckPlayerProps) {
   const [internalIndex, setInternalIndex] = useState(currentIndex);
   const [internalPlaying, setInternalPlaying] = useState(isPlaying);
@@ -187,7 +190,7 @@ export default function DeckPlayer({
               : "text-white/70 hover:text-white hover:bg-white/10"
           }`}
         >
-          <Shuffle size={13} className={isShuffle ? "animate-pulse" : ""} />
+          <PremiumShuffleIcon size={14} className={isShuffle ? "animate-pulse" : ""} />
           <span>Shuffle</span>
         </button>
 
@@ -204,7 +207,7 @@ export default function DeckPlayer({
               : "text-white/70 hover:text-white hover:bg-white/10"
           }`}
         >
-          <Repeat size={13} />
+          <PremiumLoopIcon size={14} />
           <span>Loop Forever</span>
           <span className="text-[10px] font-mono opacity-80">(All 33)</span>
         </button>
@@ -321,6 +324,7 @@ export default function DeckPlayer({
                   }}
                   onNext={handleNextTrack}
                   onPrev={handlePrevTrack}
+                  onShare={onShare}
                 />
               </motion.div>
             );

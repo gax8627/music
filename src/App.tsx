@@ -1,10 +1,12 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { Check } from 'lucide-react';
 import BoomerangVideoBg from './components/BoomerangVideoBg';
 import Header from './components/Header';
 import DeckPlayer from './components/DeckPlayer';
 import SongList from './components/SongList';
 import AudioVisualizer from './components/AudioVisualizer';
 import MouseFollower from './components/MouseFollower';
+import PrivateSongView from './components/PrivateSongView';
 import { tracks as ALL_TRACKS, Track } from './data/tracks';
 
 const STORAGE_KEY = 'rg_music_real_play_counts';
@@ -33,6 +35,8 @@ export default function App() {
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isPrivateView, setIsPrivateView] = useState(false);
+  const [copiedToast, setCopiedToast] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -205,6 +209,94 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleNext, handlePrev, isPlaying, currentIndex, incrementRealPlayCount]);
 
+  // Check URL for ?song=ID or #song-ID on mount or navigation
+  useEffect(() => {
+    const handleUrlRouting = () => {
+      const params = new URLSearchParams(window.location.search);
+      const songParam = params.get('song');
+      if (songParam) {
+        const foundIdx = tracks.findIndex(
+          (t) => t.id === songParam || t.id === String(songParam)
+        );
+        if (foundIdx !== -1) {
+          setCurrentIndex(foundIdx);
+          setIsPrivateView(true);
+          return;
+        }
+      }
+      if (window.location.hash.startsWith('#song-')) {
+        const hashId = window.location.hash.replace('#song-', '');
+        const foundIdx = tracks.findIndex((t) => t.id === hashId);
+        if (foundIdx !== -1) {
+          setCurrentIndex(foundIdx);
+          setIsPrivateView(true);
+        }
+      }
+    };
+
+    handleUrlRouting();
+    window.addEventListener('popstate', handleUrlRouting);
+    return () => window.removeEventListener('popstate', handleUrlRouting);
+  }, [tracks]);
+
+  // Keep URL updated when navigating tracks while in private view
+  useEffect(() => {
+    if (isPrivateView && currentTrack) {
+      const targetQuery = `?song=${currentTrack.id}`;
+      if (window.location.search !== targetQuery) {
+        const newUrl = `${window.location.origin}${window.location.pathname}${targetQuery}`;
+        window.history.replaceState(null, '', newUrl);
+      }
+    }
+  }, [isPrivateView, currentTrack]);
+
+  // Share song: copy link to private audition page and trigger toast
+  const handleShare = useCallback((songId: string) => {
+    const shareUrl = `${window.location.origin}${window.location.pathname}?song=${songId}`;
+
+    const triggerToast = () => {
+      setCopiedToast(true);
+      setTimeout(() => setCopiedToast(false), 2500);
+    };
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard
+        .writeText(shareUrl)
+        .then(() => triggerToast())
+        .catch(() => {
+          fallbackCopy(shareUrl);
+          triggerToast();
+        });
+    } else {
+      fallbackCopy(shareUrl);
+      triggerToast();
+    }
+  }, []);
+
+  const fallbackCopy = (text: string) => {
+    try {
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-9999px';
+      textArea.style.top = '-9999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+    } catch (e) {
+      console.error('Failed to copy share link:', e);
+    }
+  };
+
+  // Exit private view and return to full landing page
+  const exitPrivateView = useCallback(() => {
+    setIsPrivateView(false);
+    const cleanUrl = `${window.location.origin}${window.location.pathname}`;
+    window.history.pushState(null, '', cleanUrl);
+  }, []);
+
   return (
     <div className="relative min-h-screen w-full overflow-x-hidden bg-black select-none text-white flex flex-col justify-between">
       {/* 1. Interactive Fluid Mouse Follower & Ambient Aura */}
@@ -235,48 +327,85 @@ export default function App() {
       {/* 3. Top Header Navigation (z-20) */}
       <Header />
 
-      {/* 4. Main Landing Stage (z-10) */}
-      <main className="relative z-10 flex-1 flex flex-col items-center justify-start pt-24 sm:pt-28 pb-12 px-4 sm:px-6 md:px-8 w-full max-w-7xl mx-auto gap-6 sm:gap-7">
-        {/* Side-by-Side Horizontal Carousel with Active Scale-Up */}
-        <section className="w-full flex flex-col items-center">
-          <DeckPlayer
-            songs={tracks}
-            currentIndex={currentIndex}
-            isPlaying={isPlaying}
-            onSelectSong={selectSong}
-            audioRef={audioRef}
-            isShuffle={isShuffle}
-            onToggleShuffle={() => setIsShuffle((prev) => !prev)}
-            isLoopForever={isLoopForever}
-            onToggleLoopForever={() => setIsLoopForever((prev) => !prev)}
-            onNext={() => handleNext(true)}
-            onPrev={handlePrev}
-          />
-        </section>
+      {/* 4. Stage: Either Dedicated Private VIP Page OR Full 33-Song Main Stage */}
+      {isPrivateView && currentTrack ? (
+        <PrivateSongView
+          song={currentTrack}
+          isPlaying={isPlaying}
+          onTogglePlay={() => selectSong(currentIndex, !isPlaying)}
+          onNext={() => handleNext(true)}
+          onPrev={handlePrev}
+          onExitPrivateView={exitPrivateView}
+          onShare={handleShare}
+          audioRef={audioRef}
+          isShuffle={isShuffle}
+          onToggleShuffle={() => setIsShuffle((prev) => !prev)}
+          isLoopForever={isLoopForever}
+          onToggleLoopForever={() => setIsLoopForever((prev) => !prev)}
+          copiedToast={copiedToast}
+        />
+      ) : (
+        <main className="relative z-10 flex-1 flex flex-col items-center justify-start pt-24 sm:pt-28 pb-12 px-4 sm:px-6 md:px-8 w-full max-w-7xl mx-auto gap-6 sm:gap-7">
+          {/* Side-by-Side Horizontal Carousel with Active Scale-Up */}
+          <section className="w-full flex flex-col items-center">
+            <DeckPlayer
+              songs={tracks}
+              currentIndex={currentIndex}
+              isPlaying={isPlaying}
+              onSelectSong={selectSong}
+              audioRef={audioRef}
+              isShuffle={isShuffle}
+              onToggleShuffle={() => setIsShuffle((prev) => !prev)}
+              isLoopForever={isLoopForever}
+              onToggleLoopForever={() => setIsLoopForever((prev) => !prev)}
+              onNext={() => handleNext(true)}
+              onPrev={handlePrev}
+              onShare={handleShare}
+            />
+          </section>
 
-        {/* Real-time Dynamic Audio Visualizer Spectrum */}
-        <section className="w-full">
-          <AudioVisualizer
-            isPlaying={isPlaying}
-            audioRef={audioRef}
-            trackTitle={currentTrack?.title}
-          />
-        </section>
+          {/* Real-time Dynamic Audio Visualizer Spectrum */}
+          <section className="w-full">
+            <AudioVisualizer
+              isPlaying={isPlaying}
+              audioRef={audioRef}
+              trackTitle={currentTrack?.title}
+            />
+          </section>
 
-        {/* Chronological List of All 33 Songs */}
-        <section className="w-full">
-          <SongList
-            songs={tracks}
-            currentIndex={currentIndex}
-            isPlaying={isPlaying}
-            onSelectSong={selectSong}
-            isShuffle={isShuffle}
-            onToggleShuffle={() => setIsShuffle((prev) => !prev)}
-            isLoopForever={isLoopForever}
-            onToggleLoopForever={() => setIsLoopForever((prev) => !prev)}
-          />
-        </section>
-      </main>
+          {/* Chronological List of All 33 Songs */}
+          <section className="w-full">
+            <SongList
+              songs={tracks}
+              currentIndex={currentIndex}
+              isPlaying={isPlaying}
+              onSelectSong={selectSong}
+              isShuffle={isShuffle}
+              onToggleShuffle={() => setIsShuffle((prev) => !prev)}
+              isLoopForever={isLoopForever}
+              onToggleLoopForever={() => setIsLoopForever((prev) => !prev)}
+              onShare={handleShare}
+            />
+          </section>
+        </main>
+      )}
+
+      {/* Floating Copied Toast Alert */}
+      {copiedToast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-zinc-950/95 text-white border border-emerald-500/50 shadow-[0_10px_35px_rgba(16,185,129,0.3)] px-5 py-3 rounded-2xl backdrop-blur-md animate-fade-up">
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white shrink-0">
+            <Check size={14} strokeWidth={3} />
+          </span>
+          <div className="flex flex-col text-left">
+            <span className="text-xs font-bold text-white tracking-wide">
+              Private Audition Link Copied!
+            </span>
+            <span className="text-[11px] text-zinc-300 font-mono">
+              Direct VIP link ready to share
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* 5. Footer Note */}
       <footer className="relative z-10 py-4 text-center text-[11px] font-mono text-white/50 border-t border-white/10">

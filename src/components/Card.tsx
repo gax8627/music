@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { Play, Pause, SkipBack, SkipForward, Headphones, Calendar } from 'lucide-react';
 import Waveform from './Waveform';
 import { formatTime } from '../data/tracks';
+import { PremiumShareIcon } from './PremiumIcons';
 
 export interface Song {
   id: string;
@@ -32,6 +33,7 @@ export interface CardProps {
   isBackground?: boolean;
   isActive?: boolean;
   className?: string;
+  onShare?: (songId: string) => void;
 }
 
 export default function Card({
@@ -43,6 +45,7 @@ export default function Card({
   isBackground = false,
   isActive = false,
   className = '',
+  onShare,
 }: CardProps) {
   const isExpanded = isPlaying || isActive;
   const playCount = typeof song.plays === 'number' ? song.plays : 0;
@@ -126,10 +129,25 @@ export default function Card({
       {/* Middle Section: Tag ("Demo"), Prominent Song Name, and Artist */}
       <div className="relative z-10 flex flex-col min-w-0 mt-2">
         <div className="flex items-center justify-between gap-2 mb-1">
-          {/* Demo Tag */}
-          <span className="inline-flex items-center text-[10px] sm:text-[11px] font-bold tracking-wider uppercase text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200 shadow-sm">
-            Demo
-          </span>
+          {/* Demo Tag & Share Button */}
+          <div className="flex items-center gap-1.5">
+            <span className="inline-flex items-center text-[10px] sm:text-[11px] font-bold tracking-wider uppercase text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200 shadow-sm">
+              Demo
+            </span>
+            {onShare && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onShare(song.id);
+                }}
+                title="Share this song (private link)"
+                className="p-1 rounded-full text-zinc-400 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
+              >
+                <PremiumShareIcon size={12} />
+              </button>
+            )}
+          </div>
 
           {/* Real Play Count */}
           <span className="inline-flex items-center gap-1.5 text-[11px] font-mono text-zinc-600 font-semibold">
