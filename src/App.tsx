@@ -93,42 +93,7 @@ export default function App() {
   }, []);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  // Holds the current blob: URL so we can revoke it when switching tracks
-  const blobUrlRef = useRef<string | null>(null);
-
   const currentTrack = tracks[currentIndex] || tracks[0];
-
-  // Fetch a track's src, create a blob URL, and set it on the audio element.
-  // This prevents the raw /audio/ path from appearing in the audio element's src attribute
-  // and removes the browser's native "Save Audio As" context menu option.
-  const loadBlobUrl = useCallback(
-    async (src: string, audio: HTMLAudioElement): Promise<boolean> => {
-      try {
-        const resp = await fetch(src, {
-          cache: 'no-store',
-          credentials: 'same-origin',
-        });
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-        const blob = await resp.blob();
-        const newBlobUrl = URL.createObjectURL(blob);
-
-        // Revoke previous blob URL to free memory
-        if (blobUrlRef.current) {
-          URL.revokeObjectURL(blobUrlRef.current);
-        }
-        blobUrlRef.current = newBlobUrl;
-        audio.src = newBlobUrl;
-        audio.load();
-        return true;
-      } catch (err) {
-        console.warn('Blob load failed, falling back to direct src:', err);
-        audio.src = src;
-        audio.load();
-        return false;
-      }
-    },
-    []
-  );
 
   // Save and increment real play count in state and localStorage
   const incrementRealPlayCount = useCallback((index: number) => {
@@ -162,7 +127,7 @@ export default function App() {
     });
   }, []);
 
-  // Central audio controller — loads via blob URL to prevent direct file access
+  // Central audio controller — synchronous src assignment to guarantee continuous auto-play on locked iPhone
   const selectSong = useCallback(
     (index: number, shouldPlay = true) => {
       const target = tracks[index];
@@ -174,39 +139,33 @@ export default function App() {
       const audio = audioRef.current;
       if (!audio || !target.src) return;
 
-      // Check if this is the same track already loaded (blob URL is already set)
-      const alreadyLoaded =
-        audio.src &&
-        audio.src.startsWith('blob:') &&
-        isSameTrack;
+      const needsUpdate = !audio.src.endsWith(target.src);
+      if (needsUpdate) {
+        audio.src = target.src;
+        audio.load();
+      }
 
-      const doPlay = () => {
-        if (shouldPlay) {
-          audio
-            .play()
-            .then(() => {
-              setIsPlaying(true);
-              if (!isSameTrack || !isPlaying) {
-                incrementRealPlayCount(index);
-              }
-            })
-            .catch((err) => {
-              console.warn('Playback interrupted:', err);
-              setIsPlaying(false);
-            });
-        } else {
-          audio.pause();
-          setIsPlaying(false);
-        }
-      };
-
-      if (alreadyLoaded) {
-        doPlay();
+      if (shouldPlay) {
+        // Synchronous play call within the onended event loop allows iOS Safari
+        // to maintain its background audio session when the screen is locked.
+        audio
+          .play()
+          .then(() => {
+            setIsPlaying(true);
+            if (!isSameTrack || !isPlaying) {
+              incrementRealPlayCount(index);
+            }
+          })
+          .catch((err) => {
+            console.warn('Playback interrupted:', err);
+            setIsPlaying(false);
+          });
       } else {
-        loadBlobUrl(target.src, audio).then(() => doPlay());
+        audio.pause();
+        setIsPlaying(false);
       }
     },
-    [tracks, currentIndex, isPlaying, incrementRealPlayCount, loadBlobUrl]
+    [tracks, currentIndex, isPlaying, incrementRealPlayCount]
   );
 
   const [isShuffle, setIsShuffle] = useState(true);
@@ -214,10 +173,15 @@ export default function App() {
   const historyRef = useRef<number[]>([currentIndex]);
   const playedInShuffleRef = useRef<Set<number>>(new Set([currentIndex]));
 
-  // Load initial track via blob URL and attempt autoplay
+  // Load initial track and attempt automatic playback
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !currentTrack?.src) return;
+
+    if (!audio.src.endsWith(currentTrack.src)) {
+      audio.src = currentTrack.src;
+      audio.load();
+    }
 
     const attemptPlay = () => {
       const playPromise = audio.play();
@@ -247,8 +211,7 @@ export default function App() {
       }
     };
 
-    // Load via blob URL first, then play
-    loadBlobUrl(currentTrack.src, audio).then(() => attemptPlay());
+    attemptPlay();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getNextTrackIndex = useCallback((): number => {
@@ -357,6 +320,110 @@ export default function App() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleNext, handlePrev, isPlaying, currentIndex, incrementRealPlayCount]);
+
+  // Media Session API: Powers iOS Lock Screen & Control Center, Apple Watch, AirPods, and Android media notification
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('mediaSession' in navigator)) return;
+
+    const audio = audioRef.current;
+    if (!audio || !currentTrack) return;
+
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: currentTrack.title,
+        artist: currentTrack.artist || 'RG Music',
+        album: currentTrack.album || 'RG Music Studio Archives',
+        artwork: [
+          {
+            src: `${window.location.origin}/favicon.svg`,
+            sizes: '512x512',
+            type: 'image/svg+xml',
+          },
+        ],
+      });
+
+      navigator.mediaSession.setActionHandler('play', () => {
+        selectSong(currentIndex, true);
+      });
+
+      navigator.mediaSession.setActionHandler('pause', () => {
+        selectSong(currentIndex, false);
+      });
+
+      navigator.mediaSession.setActionHandler('previoustrack', () => {
+        handlePrev();
+      });
+
+      navigator.mediaSession.setActionHandler('nexttrack', () => {
+        handleNext(true);
+      });
+
+      navigator.mediaSession.setActionHandler('seekto', (details) => {
+        if (details.seekTime !== undefined && audio && !isNaN(details.seekTime)) {
+          audio.currentTime = details.seekTime;
+        }
+      });
+    } catch (e) {
+      console.warn('MediaSession handler warning:', e);
+    }
+  }, [currentTrack, currentIndex, handleNext, handlePrev, selectSong]);
+
+  // Synchronize playbackState with iOS lock screen
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('mediaSession' in navigator)) return;
+    try {
+      navigator.mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
+    } catch {}
+  }, [isPlaying]);
+
+  // Synchronize position state (progress bar & duration) with iOS lock screen scrubber
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('mediaSession' in navigator)) return;
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const updatePosition = () => {
+      if (
+        'setPositionState' in navigator.mediaSession &&
+        audio.duration &&
+        !isNaN(audio.duration) &&
+        isFinite(audio.duration)
+      ) {
+        try {
+          navigator.mediaSession.setPositionState({
+            duration: audio.duration,
+            playbackRate: audio.playbackRate || 1,
+            position: Math.min(audio.currentTime, audio.duration),
+          });
+        } catch {}
+      }
+    };
+
+    audio.addEventListener('timeupdate', updatePosition);
+    audio.addEventListener('durationchange', updatePosition);
+    return () => {
+      audio.removeEventListener('timeupdate', updatePosition);
+      audio.removeEventListener('durationchange', updatePosition);
+    };
+  }, []);
+
+  // Preload next upcoming track so iOS Safari has bytes buffered ahead of time
+  useEffect(() => {
+    const nextIdx = (currentIndex + 1) % tracks.length;
+    const nextTrack = tracks[nextIdx];
+    if (nextTrack?.src) {
+      const preloadLink = document.createElement('link');
+      preloadLink.rel = 'prefetch';
+      preloadLink.as = 'fetch';
+      preloadLink.href = nextTrack.src;
+      document.head.appendChild(preloadLink);
+      return () => {
+        if (document.head.contains(preloadLink)) {
+          document.head.removeChild(preloadLink);
+        }
+      };
+    }
+  }, [currentIndex, tracks]);
 
   // On mount: decode ?s=<token> share links asynchronously.
   // Old ?song= sequential IDs are intentionally no longer accepted.
@@ -471,11 +538,11 @@ export default function App() {
         <div className="absolute inset-0 bg-black/40 pointer-events-none" />
       </div>
 
-      {/* Unified Master HTML5 Audio Engine — controlsList blocks native download UI */}
-      {/* Audio src is always a blob: URL so the /audio/ path is never exposed in the DOM */}
+      {/* Unified Master HTML5 Audio Engine — playsInline and preload=auto power seamless locked iPhone background playback */}
       <audio
         ref={audioRef}
-        preload="metadata"
+        preload="auto"
+        playsInline
         controlsList="nodownload nofullscreen noremoteplayback"
         onContextMenu={(e) => e.preventDefault()}
         onEnded={() => {
