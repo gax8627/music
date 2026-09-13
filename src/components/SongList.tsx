@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { Play, Pause, Search, Heart, Headphones, Calendar, ArrowUpDown } from 'lucide-react';
 import { Song } from './Card';
 import { PremiumShuffleIcon, PremiumLoopIcon, PremiumShareIcon } from './PremiumIcons';
+import CardVisualizerCover from './CardVisualizerCover';
 
 export interface SongListProps {
   songs: Song[];
@@ -31,6 +32,20 @@ export default function SongList({
   const [searchQuery, setSearchQuery] = useState('');
   const [likedMap, setLikedMap] = useState<Record<string, boolean>>({});
   const [isNewestFirst, setIsNewestFirst] = useState(false);
+
+  const totalDurationLabel = useMemo(() => {
+    const totalSecs = songs.reduce(
+      (acc, s) =>
+        acc +
+        (typeof s.duration === 'number'
+          ? s.duration
+          : parseFloat(String(s.duration)) || 0),
+      0
+    );
+    const hrs = Math.floor(totalSecs / 3600);
+    const mins = Math.floor((totalSecs % 3600) / 60);
+    return hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`;
+  }, [songs]);
 
   const toggleLike = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -69,8 +84,8 @@ export default function SongList({
           <div>
             <h3 className="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
               All Recordings by Creation Date
-              <span className="text-xs font-normal text-white/60 bg-white/10 px-2 py-0.5 rounded-full">
-                {songs.length} tracks
+              <span className="text-xs font-normal text-white/80 bg-white/15 px-2.5 py-0.5 rounded-full border border-white/10 font-mono">
+                {songs.length} tracks · {totalDurationLabel}
               </span>
             </h3>
             <p className="text-xs text-white/70">
@@ -194,14 +209,13 @@ export default function SongList({
                     {String(originalIdx + 1).padStart(2, '0')}
                   </span>
 
-                  {/* Mini Cover Thumbnail */}
-                  <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 border border-white/20 shadow-sm relative">
-                    <img
-                      src={song.cover}
-                      alt={song.title}
-                      className="w-full h-full object-cover select-none"
-                    />
-                  </div>
+                  {/* Mini Visualizer Cover Thumbnail (Replaces Stock Image) */}
+                  <CardVisualizerCover
+                    isPlaying={isActive && isPlaying}
+                    trackNumber={originalIdx + 1}
+                    bgGradient={song.bgGradient}
+                    size="sm"
+                  />
 
                   {/* Song Title, Artist & Creation Date */}
                   <div className="min-w-0 flex-1 pr-2">

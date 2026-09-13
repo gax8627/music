@@ -82,25 +82,6 @@ export const tracks: Track[] = [
   },
   {
     "id": "4",
-    "title": "Alma Denisse",
-    "artist": "RG Music",
-    "duration": 179,
-    "durationFormatted": "02:59",
-    "createdDate": "May 25, 2026",
-    "createdDateISO": "2026-05-25",
-    "plays": 0,
-    "playsFormatted": "0 plays",
-    "bgGradient": "#e0f2fe",
-    "cover": "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=400&auto=format&fit=crop",
-    "src": "/audio/track4.mp3",
-    "headerText": "ALMA DENISSE",
-    "subText": "Created: May 25, 2026",
-    "edition": "Demo",
-    "currentTime": 0,
-    "liked": false
-  },
-  {
-    "id": "5",
     "title": "Almas Gemelas",
     "artist": "RG Music",
     "duration": 181,
@@ -119,7 +100,7 @@ export const tracks: Track[] = [
     "liked": false
   },
   {
-    "id": "6",
+    "id": "5",
     "title": "Ale, Ale, Alejandra",
     "artist": "RG Music",
     "duration": 153,
@@ -138,7 +119,7 @@ export const tracks: Track[] = [
     "liked": false
   },
   {
-    "id": "7",
+    "id": "6",
     "title": "Todo Se Vuelve Lento",
     "artist": "RG Music",
     "duration": 179,
@@ -157,7 +138,7 @@ export const tracks: Track[] = [
     "liked": false
   },
   {
-    "id": "8",
+    "id": "7",
     "title": "Mi Corazón Palpita",
     "artist": "RG Music",
     "duration": 205,
@@ -176,7 +157,7 @@ export const tracks: Track[] = [
     "liked": false
   },
   {
-    "id": "9",
+    "id": "8",
     "title": "Solo Tú y Yo",
     "artist": "RG Music",
     "duration": 145,
@@ -195,7 +176,7 @@ export const tracks: Track[] = [
     "liked": false
   },
   {
-    "id": "10",
+    "id": "9",
     "title": "Por ti no seremos",
     "artist": "RG Music",
     "duration": 159,
@@ -214,7 +195,7 @@ export const tracks: Track[] = [
     "liked": false
   },
   {
-    "id": "11",
+    "id": "10",
     "title": "Ale",
     "artist": "RG Music",
     "duration": 178,
@@ -233,7 +214,7 @@ export const tracks: Track[] = [
     "liked": false
   },
   {
-    "id": "12",
+    "id": "11",
     "title": "La Jerarquía (The Foundation)",
     "artist": "RG Music",
     "duration": 176,
@@ -252,7 +233,7 @@ export const tracks: Track[] = [
     "liked": false
   },
   {
-    "id": "13",
+    "id": "12",
     "title": "Inspírame (Salsa Mix)",
     "artist": "RG Music",
     "duration": 182,
@@ -271,7 +252,7 @@ export const tracks: Track[] = [
     "liked": false
   },
   {
-    "id": "14",
+    "id": "13",
     "title": "Ibiany",
     "artist": "RG Music",
     "duration": 181,
@@ -290,7 +271,7 @@ export const tracks: Track[] = [
     "liked": false
   },
   {
-    "id": "15",
+    "id": "14",
     "title": "Ibiany (Hechizo de Club)",
     "artist": "RG Music",
     "duration": 181,
@@ -309,7 +290,7 @@ export const tracks: Track[] = [
     "liked": false
   },
   {
-    "id": "16",
+    "id": "15",
     "title": "De Manera Temporal",
     "artist": "RG Music",
     "duration": 179,
@@ -328,7 +309,7 @@ export const tracks: Track[] = [
     "liked": false
   },
   {
-    "id": "17",
+    "id": "16",
     "title": "Todo el día te extrañé",
     "artist": "RG Music",
     "duration": 144,
@@ -347,7 +328,7 @@ export const tracks: Track[] = [
     "liked": false
   },
   {
-    "id": "18",
+    "id": "17",
     "title": "¿Cuál es el Plan?",
     "artist": "RG Music",
     "duration": 169,
@@ -366,7 +347,7 @@ export const tracks: Track[] = [
     "liked": false
   },
   {
-    "id": "19",
+    "id": "18",
     "title": "Perdón por querer",
     "artist": "RG Music",
     "duration": 149,
@@ -385,7 +366,7 @@ export const tracks: Track[] = [
     "liked": false
   },
   {
-    "id": "20",
+    "id": "19",
     "title": "Aunque no creas",
     "artist": "RG Music",
     "duration": 149,
@@ -404,7 +385,7 @@ export const tracks: Track[] = [
     "liked": false
   },
   {
-    "id": "21",
+    "id": "20",
     "title": "Al parecer",
     "artist": "RG Music",
     "duration": 159,
@@ -423,7 +404,7 @@ export const tracks: Track[] = [
     "liked": false
   },
   {
-    "id": "22",
+    "id": "21",
     "title": "Insomnio de Luna",
     "artist": "RG Music",
     "duration": 161,
@@ -442,7 +423,7 @@ export const tracks: Track[] = [
     "liked": false
   },
   {
-    "id": "23",
+    "id": "22",
     "title": "Ya me dices Baby",
     "artist": "RG Music",
     "duration": 180,
@@ -461,7 +442,7 @@ export const tracks: Track[] = [
     "liked": false
   },
   {
-    "id": "24",
+    "id": "23",
     "title": "¿Y si te hago feliz?",
     "artist": "RG Music",
     "duration": 159,
@@ -480,7 +461,7 @@ export const tracks: Track[] = [
     "liked": false
   },
   {
-    "id": "25",
+    "id": "24",
     "title": "Nunca pasara para que pase",
     "artist": "RG Music",
     "duration": 182,
@@ -499,7 +480,7 @@ export const tracks: Track[] = [
     "liked": false
   },
   {
-    "id": "26",
+    "id": "25",
     "title": "¿Cómo te tengo?",
     "artist": "RG Music",
     "duration": 180,
@@ -518,7 +499,7 @@ export const tracks: Track[] = [
     "liked": false
   },
   {
-    "id": "27",
+    "id": "26",
     "title": "Te Quiero Hacer Mi Esposa",
     "artist": "RG Music",
     "duration": 166,
@@ -537,7 +518,7 @@ export const tracks: Track[] = [
     "liked": false
   },
   {
-    "id": "28",
+    "id": "27",
     "title": "Uno Mas Uno",
     "artist": "RG Music",
     "duration": 179,
@@ -556,7 +537,7 @@ export const tracks: Track[] = [
     "liked": false
   },
   {
-    "id": "29",
+    "id": "28",
     "title": "Dime Que No",
     "artist": "RG Music",
     "duration": 158,
@@ -575,7 +556,7 @@ export const tracks: Track[] = [
     "liked": false
   },
   {
-    "id": "30",
+    "id": "29",
     "title": "Lástima",
     "artist": "RG Music",
     "duration": 179,
@@ -594,7 +575,7 @@ export const tracks: Track[] = [
     "liked": false
   },
   {
-    "id": "31",
+    "id": "30",
     "title": "Hermoso, Bello y Sensual",
     "artist": "RG Music",
     "duration": 179,
@@ -613,7 +594,7 @@ export const tracks: Track[] = [
     "liked": false
   },
   {
-    "id": "32",
+    "id": "31",
     "title": "No Entiendo Por Qué",
     "artist": "RG Music",
     "duration": 129,
@@ -632,7 +613,7 @@ export const tracks: Track[] = [
     "liked": false
   },
   {
-    "id": "33",
+    "id": "32",
     "title": "Constante, Paciente y Detallista",
     "artist": "RG Music",
     "duration": 171,
@@ -655,6 +636,16 @@ export const tracks: Track[] = [
 export const TRACKS: Track[] = tracks;
 export const SONGS: Song[] = tracks;
 export const songs: Song[] = tracks;
+
+export const TOTAL_SONGS = 32;
+export const TOTAL_SECONDS = 5409;
+export const TOTAL_DURATION_LABEL = '1h 30m';
+
+export function formatTotalDuration(seconds: number = TOTAL_SECONDS): string {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}
 
 export function formatTime(seconds: number): string {
   const mins = Math.floor(seconds / 60);

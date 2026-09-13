@@ -1,9 +1,16 @@
+import { TOTAL_SONGS, TOTAL_DURATION_LABEL } from '../data/tracks';
+
 export interface HeaderProps {
+  totalSongs?: number;
+  totalTime?: string;
   cartCount?: number;
   onCartClick?: () => void;
 }
 
-export const Header = (_props: HeaderProps = {}) => {
+export const Header = ({
+  totalSongs = TOTAL_SONGS,
+  totalTime = TOTAL_DURATION_LABEL,
+}: HeaderProps = {}) => {
   return (
     <header className="absolute top-0 left-0 right-0 z-20 px-6 sm:px-12 py-6 flex items-center justify-between">
       {/* Left: Rebranded RG Music Logo */}
@@ -38,13 +45,15 @@ export const Header = (_props: HeaderProps = {}) => {
         <span>RG Music</span>
       </a>
 
-      {/* Right: Studio Status Badge */}
-      <div className="flex items-center gap-2 liquid-glass rounded-full px-3.5 py-1 text-xs text-white/80 select-none">
+      {/* Right: Studio Status & Total Songs / Time Badge */}
+      <div className="flex items-center gap-2.5 liquid-glass rounded-full px-3.5 sm:px-4 py-1.5 text-xs text-white/90 select-none shadow-lg">
         <span className="relative flex h-2 w-2">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500" />
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
         </span>
-        <span className="font-medium tracking-wide">Studio Live</span>
+        <span className="font-mono tracking-wide font-medium">
+          {totalSongs} Songs · {totalTime}
+        </span>
       </div>
     </header>
   );

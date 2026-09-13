@@ -3,6 +3,7 @@ import { Play, Pause, SkipBack, SkipForward, Headphones, Calendar } from 'lucide
 import Waveform from './Waveform';
 import { formatTime } from '../data/tracks';
 import { PremiumShareIcon } from './PremiumIcons';
+import CardVisualizerCover, { VinylCenterLabel } from './CardVisualizerCover';
 
 export interface Song {
   id: string;
@@ -109,28 +110,18 @@ export default function Card({
               <div className="absolute inset-10 rounded-full border border-zinc-800/30" />
 
               {/* Center Record Label */}
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden border-2 border-zinc-700/80 shadow-inner relative flex items-center justify-center">
-                <img
-                  src={song.cover}
-                  alt=""
-                  draggable={false}
-                  className="w-full h-full object-cover select-none pointer-events-none"
-                />
-                <div className="absolute w-3 h-3 rounded-full bg-zinc-950 border border-white/60 shadow-inner" />
-              </div>
+              <VinylCenterLabel trackNumber={song.id} size="md" />
             </div>
           </motion.div>
 
-          {/* Front Album Jacket Cover */}
-          <div className="relative z-10 w-32 h-32 sm:w-36 sm:h-36 rounded-2xl overflow-hidden shadow-xl ring-1 ring-black/10 bg-zinc-100 flex-shrink-0">
-            <img
-              src={song.cover}
-              alt={song.title}
-              draggable={false}
-              className="w-full h-full object-cover select-none pointer-events-none transition-transform duration-500 hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-gradient-to-tr from-black/20 via-transparent to-white/20 pointer-events-none" />
-          </div>
+          {/* Front Album Jacket Generative Visualizer Cover */}
+          <CardVisualizerCover
+            isPlaying={isPlaying}
+            trackNumber={song.id}
+            bgGradient={song.bgGradient}
+            title={song.title}
+            size="md"
+          />
         </div>
       </div>
 

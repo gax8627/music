@@ -17,7 +17,8 @@ import {
 import { Song } from './Card';
 import AudioVisualizer from './AudioVisualizer';
 import { PremiumShuffleIcon, PremiumLoopIcon, PremiumShareIcon } from './PremiumIcons';
-import { formatTime } from '../data/tracks';
+import { formatTime, TOTAL_SONGS, TOTAL_DURATION_LABEL } from '../data/tracks';
+import CardVisualizerCover, { VinylCenterLabel } from './CardVisualizerCover';
 
 export interface PrivateSongViewProps {
   song: Song;
@@ -128,7 +129,7 @@ export const PrivateSongView: React.FC<PrivateSongViewProps> = ({
           className="liquid-glass rounded-xl px-3.5 py-2 text-xs font-medium text-white/90 hover:text-white flex items-center gap-2 hover:bg-white/15 transition-all cursor-pointer group shadow-lg"
         >
           <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
-          <span>Explore All 33 Songs</span>
+          <span>Explore All {TOTAL_SONGS} Songs ({TOTAL_DURATION_LABEL})</span>
         </button>
 
         {/* Center: Private Access Badge */}
@@ -199,26 +200,18 @@ export const PrivateSongView: React.FC<PrivateSongViewProps> = ({
                 <div className="absolute inset-16 rounded-full border border-zinc-800/30" />
 
                 {/* Center Record Label */}
-                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden border-2 border-zinc-700/80 shadow-inner relative flex items-center justify-center">
-                  <img
-                    src={song.cover}
-                    alt=""
-                    className="w-full h-full object-cover select-none"
-                  />
-                  <div className="absolute w-4 h-4 rounded-full bg-zinc-950 border border-white/60 shadow-inner" />
-                </div>
+                <VinylCenterLabel trackNumber={song.id} size="lg" />
               </div>
             </motion.div>
 
-            {/* Front Album Jacket Cover */}
-            <div className="relative z-10 w-44 h-44 sm:w-56 sm:h-56 md:w-64 md:h-64 rounded-3xl overflow-hidden shadow-2xl ring-1 ring-white/20 bg-zinc-900 flex-shrink-0">
-              <img
-                src={song.cover}
-                alt={song.title}
-                className="w-full h-full object-cover select-none"
-              />
-              <div className="absolute inset-0 bg-gradient-to-tr from-black/40 via-transparent to-white/10 pointer-events-none" />
-            </div>
+            {/* Front Album Jacket Generative Visualizer Cover */}
+            <CardVisualizerCover
+              isPlaying={isPlaying}
+              trackNumber={song.id}
+              bgGradient={song.bgGradient}
+              title={song.title}
+              size="lg"
+            />
           </div>
         </div>
 

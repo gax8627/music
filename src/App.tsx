@@ -7,7 +7,7 @@ import SongList from './components/SongList';
 import AudioVisualizer from './components/AudioVisualizer';
 import MouseFollower from './components/MouseFollower';
 import PrivateSongView from './components/PrivateSongView';
-import { tracks as ALL_TRACKS, Track } from './data/tracks';
+import { tracks as ALL_TRACKS, Track, TOTAL_SONGS, TOTAL_DURATION_LABEL } from './data/tracks';
 
 const STORAGE_KEY = 'rg_music_real_play_counts';
 
@@ -430,7 +430,7 @@ export default function App() {
 
       {/* 5. Footer Note */}
       <footer className="relative z-10 py-4 text-center text-[11px] font-mono text-white/50 border-t border-white/10">
-        RG Music Studio Archives · 33 Recordings · Lossless Wax Master · Dynamic Audio Spectrum
+        RG Music Studio Archives · {TOTAL_SONGS} Recordings · {TOTAL_DURATION_LABEL} Total Runtime · Lossless Wax Master
       </footer>
     </div>
   );
