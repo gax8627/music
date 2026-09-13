@@ -8,26 +8,16 @@ import AudioVisualizer from './components/AudioVisualizer';
 import MouseFollower from './components/MouseFollower';
 import PrivateSongView from './components/PrivateSongView';
 import { tracks as ALL_TRACKS, Track, TOTAL_SONGS, TOTAL_DURATION_LABEL } from './data/tracks';
+import { buildShareUrl, decodeShareToken } from './lib/shareToken';
 
 const STORAGE_KEY = 'rg_music_real_play_counts';
 const LAST_LOADED_KEY = 'rg_music_last_loaded_song_id';
 
-// Helper to pick a random track on page load that is DIFFERENT from the previous visit
+// Helper to pick a random track on page load that is DIFFERENT from the previous visit.
+// Note: token-based share links (?s=...) are resolved asynchronously in a useEffect below.
 function getInitialRandomTrackIndex(tracksList: Track[]): number {
   if (typeof window === 'undefined' || tracksList.length === 0) return 0;
   try {
-    const params = new URLSearchParams(window.location.search);
-    const songParam = params.get('song');
-    if (songParam) {
-      const idx = tracksList.findIndex((t) => t.id === songParam || t.id === String(songParam));
-      if (idx !== -1) return idx;
-    }
-    if (window.location.hash.startsWith('#song-')) {
-      const hashId = window.location.hash.replace('#song-', '');
-      const idx = tracksList.findIndex((t) => t.id === hashId);
-      if (idx !== -1) return idx;
-    }
-
     // Pick a random track DIFFERENT from the last loaded one
     const lastId = localStorage.getItem(LAST_LOADED_KEY);
     const pool = tracksList
@@ -76,15 +66,50 @@ export default function App() {
   const [isPrivateView, setIsPrivateView] = useState(() => {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
-      return Boolean(params.get('song')) || window.location.hash.startsWith('#song-');
+      // ?s= uses token-based routing; legacy ?song= is no longer accepted
+      return Boolean(params.get('s')) || window.location.hash.startsWith('#song-');
     }
     return false;
   });
   const [copiedToast, setCopiedToast] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  // Holds the current blob: URL so we can revoke it when switching tracks
+  const blobUrlRef = useRef<string | null>(null);
 
   const currentTrack = tracks[currentIndex] || tracks[0];
+
+  // Fetch a track's src, create a blob URL, and set it on the audio element.
+  // This prevents the raw /audio/ path from appearing in the audio element's src attribute
+  // and removes the browser's native "Save Audio As" context menu option.
+  const loadBlobUrl = useCallback(
+    async (src: string, audio: HTMLAudioElement): Promise<boolean> => {
+      try {
+        const resp = await fetch(src, {
+          cache: 'no-store',
+          credentials: 'same-origin',
+        });
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const blob = await resp.blob();
+        const newBlobUrl = URL.createObjectURL(blob);
+
+        // Revoke previous blob URL to free memory
+        if (blobUrlRef.current) {
+          URL.revokeObjectURL(blobUrlRef.current);
+        }
+        blobUrlRef.current = newBlobUrl;
+        audio.src = newBlobUrl;
+        audio.load();
+        return true;
+      } catch (err) {
+        console.warn('Blob load failed, falling back to direct src:', err);
+        audio.src = src;
+        audio.load();
+        return false;
+      }
+    },
+    []
+  );
 
   // Save and increment real play count in state and localStorage
   const incrementRealPlayCount = useCallback((index: number) => {
@@ -118,21 +143,25 @@ export default function App() {
     });
   }, []);
 
-  // Central audio controller
+  // Central audio controller — loads via blob URL to prevent direct file access
   const selectSong = useCallback(
     (index: number, shouldPlay = true) => {
       const target = tracks[index];
       if (!target) return;
 
       const isSameTrack = index === currentIndex;
-
       setCurrentIndex(index);
+
       const audio = audioRef.current;
-      if (audio && target.src) {
-        if (!audio.src.endsWith(target.src)) {
-          audio.src = target.src;
-          audio.load();
-        }
+      if (!audio || !target.src) return;
+
+      // Check if this is the same track already loaded (blob URL is already set)
+      const alreadyLoaded =
+        audio.src &&
+        audio.src.startsWith('blob:') &&
+        isSameTrack;
+
+      const doPlay = () => {
         if (shouldPlay) {
           audio
             .play()
@@ -150,9 +179,15 @@ export default function App() {
           audio.pause();
           setIsPlaying(false);
         }
+      };
+
+      if (alreadyLoaded) {
+        doPlay();
+      } else {
+        loadBlobUrl(target.src, audio).then(() => doPlay());
       }
     },
-    [tracks, currentIndex, isPlaying, incrementRealPlayCount]
+    [tracks, currentIndex, isPlaying, incrementRealPlayCount, loadBlobUrl]
   );
 
   const [isShuffle, setIsShuffle] = useState(true);
@@ -160,44 +195,42 @@ export default function App() {
   const historyRef = useRef<number[]>([currentIndex]);
   const playedInShuffleRef = useRef<Set<number>>(new Set([currentIndex]));
 
-  // Load and attempt automatic playback on page load
+  // Load initial track via blob URL and attempt autoplay
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !currentTrack?.src) return;
 
-    if (!audio.src.endsWith(currentTrack.src)) {
-      audio.src = currentTrack.src;
-      audio.load();
-    }
+    const attemptPlay = () => {
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            setIsPlaying(true);
+            incrementRealPlayCount(currentIndex);
+          })
+          .catch(() => {
+            // Browser requires a user gesture — unlock on first interaction
+            const unlockAutoplay = () => {
+              if (audioRef.current && !isPlaying) {
+                audioRef.current
+                  .play()
+                  .then(() => {
+                    setIsPlaying(true);
+                    incrementRealPlayCount(currentIndex);
+                  })
+                  .catch(() => {});
+              }
+            };
+            window.addEventListener('pointerdown', unlockAutoplay, { once: true });
+            window.addEventListener('keydown', unlockAutoplay, { once: true });
+            window.addEventListener('touchstart', unlockAutoplay, { once: true });
+          });
+      }
+    };
 
-    // Attempt automatic playback and auto-unlock on first user interaction if blocked
-    const playPromise = audio.play();
-    if (playPromise !== undefined) {
-      playPromise
-        .then(() => {
-          setIsPlaying(true);
-          incrementRealPlayCount(currentIndex);
-        })
-        .catch(() => {
-          // If browser requires a user gesture, immediately start audio on the first click/touch/keypress anywhere
-          const unlockAutoplay = () => {
-            if (audioRef.current && !isPlaying) {
-              audioRef.current
-                .play()
-                .then(() => {
-                  setIsPlaying(true);
-                  incrementRealPlayCount(currentIndex);
-                })
-                .catch(() => {});
-            }
-          };
-
-          window.addEventListener('pointerdown', unlockAutoplay, { once: true });
-          window.addEventListener('keydown', unlockAutoplay, { once: true });
-          window.addEventListener('touchstart', unlockAutoplay, { once: true });
-        });
-    }
-  }, []);
+    // Load via blob URL first, then play
+    loadBlobUrl(currentTrack.src, audio).then(() => attemptPlay());
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getNextTrackIndex = useCallback((): number => {
     if (!isShuffle) {
@@ -301,21 +334,31 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleNext, handlePrev, isPlaying, currentIndex, incrementRealPlayCount]);
 
-  // Check URL for ?song=ID or #song-ID on mount or navigation
+  // On mount: decode ?s=<token> share links asynchronously.
+  // Old ?song= sequential IDs are intentionally no longer accepted.
   useEffect(() => {
-    const handleUrlRouting = () => {
+    const allIds = tracks.map((t) => t.id);
+
+    const handleUrlRouting = async () => {
       const params = new URLSearchParams(window.location.search);
-      const songParam = params.get('song');
-      if (songParam) {
-        const foundIdx = tracks.findIndex(
-          (t) => t.id === songParam || t.id === String(songParam)
-        );
-        if (foundIdx !== -1) {
-          setCurrentIndex(foundIdx);
-          setIsPrivateView(true);
-          return;
+      const shareToken = params.get('s');
+
+      if (shareToken) {
+        const songId = await decodeShareToken(shareToken, allIds);
+        if (songId !== null) {
+          const foundIdx = tracks.findIndex((t) => t.id === songId);
+          if (foundIdx !== -1) {
+            setCurrentIndex(foundIdx);
+            setIsPrivateView(true);
+            return;
+          }
         }
+        // Invalid token — clear the bad URL and stay on main page
+        window.history.replaceState(null, '', window.location.pathname);
+        return;
       }
+
+      // Legacy #song- hash support (kept for backwards compat with old bookmark-style links)
       if (window.location.hash.startsWith('#song-')) {
         const hashId = window.location.hash.replace('#song-', '');
         const foundIdx = tracks.findIndex((t) => t.id === hashId);
@@ -327,42 +370,42 @@ export default function App() {
     };
 
     handleUrlRouting();
-    window.addEventListener('popstate', handleUrlRouting);
-    return () => window.removeEventListener('popstate', handleUrlRouting);
-  }, [tracks]);
+    // Note: popstate is not needed since we use pushState, not hash navigation
+  }, [tracks]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Keep URL updated when navigating tracks while in private view
+  // Keep URL updated when navigating tracks while in private view (async token generation)
   useEffect(() => {
     if (isPrivateView && currentTrack) {
-      const targetQuery = `?song=${currentTrack.id}`;
-      if (window.location.search !== targetQuery) {
-        const newUrl = `${window.location.origin}${window.location.pathname}${targetQuery}`;
-        window.history.replaceState(null, '', newUrl);
-      }
+      buildShareUrl(currentTrack.id).then((url) => {
+        const newSearch = '?s=' + url.split('?s=')[1];
+        if (window.location.search !== newSearch) {
+          window.history.replaceState(null, '', url);
+        }
+      });
     }
   }, [isPrivateView, currentTrack]);
 
-  // Share song: copy link to private audition page and trigger toast
+  // Share song: generate token URL and copy to clipboard
   const handleShare = useCallback((songId: string) => {
-    const shareUrl = `${window.location.origin}${window.location.pathname}?song=${songId}`;
-
     const triggerToast = () => {
       setCopiedToast(true);
       setTimeout(() => setCopiedToast(false), 2500);
     };
 
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard
-        .writeText(shareUrl)
-        .then(() => triggerToast())
-        .catch(() => {
-          fallbackCopy(shareUrl);
-          triggerToast();
-        });
-    } else {
-      fallbackCopy(shareUrl);
-      triggerToast();
-    }
+    buildShareUrl(songId).then((shareUrl) => {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard
+          .writeText(shareUrl)
+          .then(() => triggerToast())
+          .catch(() => {
+            fallbackCopy(shareUrl);
+            triggerToast();
+          });
+      } else {
+        fallbackCopy(shareUrl);
+        triggerToast();
+      }
+    });
   }, []);
 
   const fallbackCopy = (text: string) => {
@@ -401,10 +444,13 @@ export default function App() {
         <div className="absolute inset-0 bg-black/40 pointer-events-none" />
       </div>
 
-      {/* Unified Master HTML5 Audio Engine with Continuous Loop Forever */}
+      {/* Unified Master HTML5 Audio Engine — controlsList blocks native download UI */}
+      {/* Audio src is always a blob: URL so the /audio/ path is never exposed in the DOM */}
       <audio
         ref={audioRef}
         preload="metadata"
+        controlsList="nodownload nofullscreen noremoteplayback"
+        onContextMenu={(e) => e.preventDefault()}
         onEnded={() => {
           if (isLoopForever) {
             handleNext(true);
