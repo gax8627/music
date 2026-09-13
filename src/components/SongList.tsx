@@ -121,7 +121,7 @@ export default function SongList({
                 ? 'bg-white text-zinc-950 shadow-[0_0_16px_rgba(255,255,255,0.4)] ring-1 ring-white scale-105'
                 : 'liquid-glass text-white/60 hover:text-white hover:bg-white/15 active:scale-95'
             }`}
-            title={isLoopForever ? 'Loop Active (All 33 Songs)' : 'Toggle continuous loop'}
+            title={isLoopForever ? 'Loop Active (All 32 Songs)' : 'Toggle continuous loop'}
           >
             <PremiumLoopIcon size={14} />
           </button>

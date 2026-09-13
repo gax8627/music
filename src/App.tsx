@@ -10,6 +10,42 @@ import PrivateSongView from './components/PrivateSongView';
 import { tracks as ALL_TRACKS, Track, TOTAL_SONGS, TOTAL_DURATION_LABEL } from './data/tracks';
 
 const STORAGE_KEY = 'rg_music_real_play_counts';
+const LAST_LOADED_KEY = 'rg_music_last_loaded_song_id';
+
+// Helper to pick a random track on page load that is DIFFERENT from the previous visit
+function getInitialRandomTrackIndex(tracksList: Track[]): number {
+  if (typeof window === 'undefined' || tracksList.length === 0) return 0;
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const songParam = params.get('song');
+    if (songParam) {
+      const idx = tracksList.findIndex((t) => t.id === songParam || t.id === String(songParam));
+      if (idx !== -1) return idx;
+    }
+    if (window.location.hash.startsWith('#song-')) {
+      const hashId = window.location.hash.replace('#song-', '');
+      const idx = tracksList.findIndex((t) => t.id === hashId);
+      if (idx !== -1) return idx;
+    }
+
+    // Pick a random track DIFFERENT from the last loaded one
+    const lastId = localStorage.getItem(LAST_LOADED_KEY);
+    const pool = tracksList
+      .map((_, i) => i)
+      .filter((i) => tracksList[i].id !== lastId);
+
+    const candidates = pool.length > 0 ? pool : tracksList.map((_, i) => i);
+    const chosen = candidates[Math.floor(Math.random() * candidates.length)] ?? 0;
+
+    const chosenTrack = tracksList[chosen];
+    if (chosenTrack) {
+      localStorage.setItem(LAST_LOADED_KEY, chosenTrack.id);
+    }
+    return chosen;
+  } catch {
+    return Math.floor(Math.random() * tracksList.length);
+  }
+}
 
 export default function App() {
   // Initialize tracks with real persisted play counts from localStorage
@@ -33,9 +69,17 @@ export default function App() {
     return ALL_TRACKS;
   });
 
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState<number>(() =>
+    getInitialRandomTrackIndex(ALL_TRACKS)
+  );
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isPrivateView, setIsPrivateView] = useState(false);
+  const [isPrivateView, setIsPrivateView] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      return Boolean(params.get('song')) || window.location.hash.startsWith('#song-');
+    }
+    return false;
+  });
   const [copiedToast, setCopiedToast] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -111,14 +155,47 @@ export default function App() {
     [tracks, currentIndex, isPlaying, incrementRealPlayCount]
   );
 
-  const [isShuffle, setIsShuffle] = useState(false);
+  const [isShuffle, setIsShuffle] = useState(true);
   const [isLoopForever, setIsLoopForever] = useState(true);
-  const historyRef = useRef<number[]>([0]);
-  const playedInShuffleRef = useRef<Set<number>>(new Set([0]));
+  const historyRef = useRef<number[]>([currentIndex]);
+  const playedInShuffleRef = useRef<Set<number>>(new Set([currentIndex]));
 
+  // Load and attempt automatic playback on page load
   useEffect(() => {
-    if (audioRef.current && currentTrack?.src) {
-      audioRef.current.src = currentTrack.src;
+    const audio = audioRef.current;
+    if (!audio || !currentTrack?.src) return;
+
+    if (!audio.src.endsWith(currentTrack.src)) {
+      audio.src = currentTrack.src;
+      audio.load();
+    }
+
+    // Attempt automatic playback and auto-unlock on first user interaction if blocked
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise
+        .then(() => {
+          setIsPlaying(true);
+          incrementRealPlayCount(currentIndex);
+        })
+        .catch(() => {
+          // If browser requires a user gesture, immediately start audio on the first click/touch/keypress anywhere
+          const unlockAutoplay = () => {
+            if (audioRef.current && !isPlaying) {
+              audioRef.current
+                .play()
+                .then(() => {
+                  setIsPlaying(true);
+                  incrementRealPlayCount(currentIndex);
+                })
+                .catch(() => {});
+            }
+          };
+
+          window.addEventListener('pointerdown', unlockAutoplay, { once: true });
+          window.addEventListener('keydown', unlockAutoplay, { once: true });
+          window.addEventListener('touchstart', unlockAutoplay, { once: true });
+        });
     }
   }, []);
 
@@ -166,25 +243,19 @@ export default function App() {
     }
   }, [isShuffle, currentIndex, tracks.length, isPlaying, selectSong]);
 
-  // Toggle shuffle mode: automatically picks a random track and starts playback immediately
+  // Shuffle mode: automatically picks a random track and starts playback immediately
   const handleToggleShuffle = useCallback(() => {
-    setIsShuffle((prev) => {
-      const nextState = !prev;
-      // When turning ON or clicking shuffle: immediately select a different random song and play automatically!
-      const availableIndices = tracks
-        .map((_, i) => i)
-        .filter((i) => i !== currentIndex);
-      const chosen =
-        availableIndices[Math.floor(Math.random() * availableIndices.length)] ?? 0;
-      playedInShuffleRef.current.clear();
-      playedInShuffleRef.current.add(chosen);
-      historyRef.current = [currentIndex, chosen];
+    const availableIndices = tracks
+      .map((_, i) => i)
+      .filter((i) => i !== currentIndex);
+    const chosen =
+      availableIndices[Math.floor(Math.random() * availableIndices.length)] ?? 0;
+    playedInShuffleRef.current.clear();
+    playedInShuffleRef.current.add(chosen);
+    historyRef.current = [currentIndex, chosen];
 
-      // Auto play the shuffled track immediately!
-      selectSong(chosen, true);
-
-      return nextState;
-    });
+    setIsShuffle(true);
+    selectSong(chosen, true);
   }, [tracks, currentIndex, selectSong]);
 
   // Global keyboard shortcuts (Left/Right arrows, Space)

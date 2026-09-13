@@ -45,7 +45,7 @@ export const PrivateSongView: React.FC<PrivateSongViewProps> = ({
   onExitPrivateView,
   onShare,
   audioRef,
-  isShuffle = false,
+  isShuffle = true,
   onToggleShuffle,
   isLoopForever = true,
   onToggleLoopForever,
@@ -330,7 +330,7 @@ export const PrivateSongView: React.FC<PrivateSongViewProps> = ({
             <button
               type="button"
               onClick={onToggleLoopForever}
-              title={isLoopForever ? 'Loop Active (All 33 Songs)' : 'Enable Loop'}
+              title={isLoopForever ? `Loop Active (All ${TOTAL_SONGS} Songs)` : 'Enable Loop'}
               className={`p-2.5 rounded-full transition-all cursor-pointer ${
                 isLoopForever
                   ? 'bg-white text-zinc-950 shadow-[0_0_20px_rgba(255,255,255,0.45)] ring-1 ring-white scale-105'

@@ -41,7 +41,7 @@ export default function DeckPlayer({
   onSelectSong,
   onTrackChange,
   audioRef,
-  isShuffle = false,
+  isShuffle = true,
   onToggleShuffle,
   isLoopForever = true,
   onToggleLoopForever,
@@ -298,7 +298,7 @@ export default function DeckPlayer({
         <button
           type="button"
           onClick={onToggleLoopForever}
-          title={isLoopForever ? 'Loop Active (All 33 Songs)' : 'Loop Off'}
+          title={isLoopForever ? `Loop Active (All ${songs.length} Songs)` : 'Loop Off'}
           aria-label="Toggle loop forever"
           className={`rounded-full p-2.5 transition-all cursor-pointer ${
             isLoopForever
