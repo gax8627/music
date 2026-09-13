@@ -409,7 +409,7 @@ export default function App() {
 
       {/* 5. Footer Note */}
       <footer className="relative z-10 py-4 text-center text-[11px] font-mono text-white/50 border-t border-white/10">
-        RG Music Studio Archives · 33 Recordings · Continuous Loop Forever · Dynamic Audio Spectrum
+        RG Music Studio Archives · 33 Recordings · Lossless Wax Master · Dynamic Audio Spectrum
       </footer>
     </div>
   );

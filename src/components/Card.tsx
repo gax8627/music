@@ -54,20 +54,26 @@ export default function Card({
   return (
     <div
       onClick={() => {
-        if (!isBackground) {
-          onTogglePlay();
-        }
+        onTogglePlay();
       }}
-      className={`relative w-[280px] sm:w-[320px] md:w-[340px] h-[385px] sm:h-[415px] flex-shrink-0 bg-white/95 rounded-[28px] overflow-hidden flex flex-col justify-between p-5 sm:p-6 border border-white/80 transition-all duration-300 select-none ${
+      className={`relative w-[280px] sm:w-[320px] md:w-[335px] h-[385px] sm:h-[415px] flex-shrink-0 bg-white/95 rounded-[32px] sm:rounded-[36px] overflow-hidden flex flex-col justify-between p-5 sm:p-6 border border-white/80 transition-all duration-300 select-none cursor-pointer ${
         isExpanded
           ? 'scale-105 sm:scale-[1.08] ring-2 ring-blue-600/80 shadow-[0_25px_60px_-10px_rgba(29,78,216,0.35)] z-20 opacity-100'
-          : 'scale-95 sm:scale-100 opacity-80 hover:opacity-100 shadow-[0_10px_30px_rgba(0,0,0,0.08)] ring-1 ring-black/5 z-10'
+          : 'scale-95 sm:scale-100 opacity-80 hover:opacity-100 shadow-[0_10px_30px_rgba(0,0,0,0.1)] ring-1 ring-black/5 z-10'
       } ${
-        isBackground
-          ? 'brightness-95 grayscale-[0.2] pointer-events-none shadow-none'
-          : 'cursor-pointer'
+        isBackground ? 'brightness-95' : ''
       } ${className}`}
     >
+      {/* Endless Ambient Circular Glow */}
+      <div
+        className={`absolute -inset-1 rounded-[36px] blur-xl transition-opacity duration-700 pointer-events-none ${
+          isExpanded ? 'opacity-45' : 'opacity-15'
+        }`}
+        style={{
+          background: `radial-gradient(circle, ${song.bgGradient || '#3B82F6'} 0%, transparent 75%)`,
+        }}
+      />
+
       {/* Dynamic Background subtle gradient */}
       <div
         className="absolute inset-0 opacity-40 pointer-events-none transition-colors duration-500"
@@ -75,18 +81,18 @@ export default function Card({
           background: `linear-gradient(135deg, ${song.bgGradient || '#dbeafe'}, #ffffff 70%)`,
         }}
       />
-      <div className="absolute inset-0 rounded-[28px] pointer-events-none ring-1 ring-black/5" />
+      <div className="absolute inset-0 rounded-[32px] sm:rounded-[36px] pointer-events-none ring-1 ring-black/5" />
 
-      {/* Top Section: Album Artwork + Sliding Vinyl Record */}
+      {/* Top Section: Album Artwork + Continuous Circular Vinyl Record Disc */}
       <div className="relative z-10 flex items-center justify-center pt-1 pb-1">
         <div className="relative w-32 h-32 sm:w-36 sm:h-36 flex items-center justify-center">
-          {/* Vinyl Record (hidden behind album jacket when not playing, slides out when playing) */}
+          {/* Continuous Circular Vinyl Record (peeking out with grooves, rotating at 33 RPM when playing) */}
           <motion.div
             className="absolute top-0 right-0 w-32 h-32 sm:w-36 sm:h-36 rounded-full bg-zinc-950 shadow-2xl flex items-center justify-center pointer-events-none"
             initial={false}
             animate={{
-              x: isPlaying ? 30 : 0,
-              opacity: isPlaying ? 1 : 0,
+              x: isPlaying ? 36 : isActive ? 22 : 12,
+              opacity: isPlaying ? 1 : isActive ? 0.85 : 0.65,
             }}
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             style={{ zIndex: 0 }}
@@ -95,7 +101,7 @@ export default function Card({
               className="w-full h-full rounded-full flex items-center justify-center relative"
               style={{ animation: isPlaying ? 'spin 4s linear infinite' : 'none' }}
             >
-              {/* Concentric Grooves */}
+              {/* Concentric Endless Grooves */}
               <div className="absolute inset-2 rounded-full border border-zinc-800/80" />
               <div className="absolute inset-4 rounded-full border border-zinc-800/60" />
               <div className="absolute inset-6 rounded-full border border-zinc-800/50" />

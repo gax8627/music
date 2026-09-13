@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect, useCallback, useLayoutEffect } from 'react';
-import { motion, useMotionValue } from 'framer-motion';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Card, { Song } from './Card';
 import { tracks as DEFAULT_TRACKS } from '../data/tracks';
@@ -24,6 +24,15 @@ export interface DeckPlayerProps {
   onShare?: (songId: string) => void;
 }
 
+// Calculate shortest signed circular offset in an infinite ring (no beginning, no end)
+const getCircularDiff = (index: number, active: number, total: number): number => {
+  if (total <= 0) return 0;
+  let diff = (index - active) % total;
+  if (diff > total / 2) diff -= total;
+  if (diff < -total / 2) diff += total;
+  return diff;
+};
+
 export default function DeckPlayer({
   className = '',
   songs = SONGS,
@@ -42,40 +51,25 @@ export default function DeckPlayer({
 }: DeckPlayerProps) {
   const [internalIndex, setInternalIndex] = useState(currentIndex);
   const [internalPlaying, setInternalPlaying] = useState(isPlaying);
-  const [translateX, setTranslateX] = useState(0);
+  const [liveDrag, setLiveDrag] = useState(0);
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 640 : false
+  );
 
   const activeIndex = onSelectSong !== undefined ? currentIndex : internalIndex;
   const activePlaying = onSelectSong !== undefined ? isPlaying : internalPlaying;
 
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const internalAudioRef = useRef<HTMLAudioElement | null>(null);
   const effectiveAudioRef = audioRef || internalAudioRef;
 
-  const dragX = useMotionValue(0);
-
-  // Recalculate horizontal center position for active card
-  const updateCenterPosition = useCallback(() => {
-    const container = containerRef.current;
-    const card = cardRefs.current[activeIndex];
-    if (!container || !card) return;
-
-    const containerCenter = container.offsetWidth / 2;
-    const cardCenter = card.offsetLeft + card.offsetWidth / 2;
-    const targetX = containerCenter - cardCenter;
-    setTranslateX(targetX);
-    dragX.set(0);
-  }, [activeIndex, dragX]);
-
-  useLayoutEffect(() => {
-    updateCenterPosition();
-  }, [updateCenterPosition]);
-
   useEffect(() => {
-    const handleResize = () => updateCenterPosition();
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [updateCenterPosition]);
+  }, []);
 
   // Audio Playback synchronization
   const playTrack = useCallback(
@@ -177,159 +171,196 @@ export default function DeckPlayer({
         />
       )}
 
-      {/* Playback Mode Floating Glass Pill (Shuffle & Loop Forever) */}
-      <div className="z-30 mb-2 sm:mb-3 flex items-center gap-2 sm:gap-3 bg-black/40 hover:bg-black/60 backdrop-blur-lg px-3.5 sm:px-4 py-1.5 rounded-full border border-white/15 shadow-xl select-none transition-all">
-        {/* Shuffle Mode Toggle */}
+      {/* Playback Mode Floating Glass Pill (Icon Only: Shuffle & Loop Forever) */}
+      <div className="z-30 mb-2 sm:mb-4 flex items-center gap-2 bg-black/40 hover:bg-black/60 backdrop-blur-lg p-1 rounded-full border border-white/15 shadow-xl select-none transition-all">
+        {/* Shuffle Mode Toggle (Icon only) */}
         <button
           type="button"
           onClick={onToggleShuffle}
-          title={isShuffle ? "Shuffle Active (Click to disable)" : "Shuffle Off (Click to enable)"}
-          className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all cursor-pointer ${
+          title={isShuffle ? 'Shuffle Active' : 'Enable Shuffle'}
+          aria-label="Toggle shuffle"
+          className={`rounded-full p-2.5 transition-all cursor-pointer ${
             isShuffle
-              ? "bg-blue-600 text-white shadow-md shadow-blue-500/40 ring-1 ring-blue-400 font-semibold"
-              : "text-white/70 hover:text-white hover:bg-white/10"
+              ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30 scale-105 ring-1 ring-blue-400'
+              : 'text-white/70 hover:text-white hover:bg-white/10 hover:scale-105 active:scale-95'
           }`}
         >
-          <PremiumShuffleIcon size={14} className={isShuffle ? "animate-pulse" : ""} />
-          <span>Shuffle</span>
+          <PremiumShuffleIcon size={15} className={isShuffle ? 'animate-pulse' : ''} />
         </button>
 
-        <div className="h-3 w-px bg-white/20" />
-
-        {/* Loop Forever Toggle */}
+        {/* Loop Forever Toggle (Icon only) */}
         <button
           type="button"
           onClick={onToggleLoopForever}
-          title={isLoopForever ? "Loop Forever Active (Continuous infinite playback of all songs)" : "Loop Off"}
-          className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium transition-all cursor-pointer ${
+          title={isLoopForever ? 'Loop Forever Active (All 33 Songs)' : 'Loop Off'}
+          aria-label="Toggle loop forever"
+          className={`rounded-full p-2.5 transition-all cursor-pointer ${
             isLoopForever
-              ? "bg-emerald-600/90 text-white shadow-md shadow-emerald-500/30 ring-1 ring-emerald-400 font-semibold"
-              : "text-white/70 hover:text-white hover:bg-white/10"
+              ? 'bg-emerald-600/90 text-white shadow-lg shadow-emerald-500/30 scale-105 ring-1 ring-emerald-400'
+              : 'text-white/70 hover:text-white hover:bg-white/10 hover:scale-105 active:scale-95'
           }`}
         >
-          <PremiumLoopIcon size={14} />
-          <span>Loop Forever</span>
-          <span className="text-[10px] font-mono opacity-80">(All 33)</span>
+          <PremiumLoopIcon size={15} />
         </button>
-
-        <div className="h-3 w-px bg-white/20 hidden sm:block" />
-
-        <span className="text-[10px] font-mono text-white/50 hidden sm:inline">
-          {isShuffle ? "Random Mix" : isLoopForever ? "Looping All 33" : "Sequential"}
-        </span>
       </div>
 
-      {/* Floating Glass Navigation Previous Arrow (Anchored on Left) */}
+      {/* Left Chevron Button */}
       <button
         type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          handlePrevTrack();
-        }}
+        onClick={handlePrevTrack}
         aria-label="Previous track"
-        className="!absolute left-3 sm:left-6 md:left-10 top-1/2 -translate-y-1/2 z-40 w-12 h-12 rounded-full bg-black/40 hover:bg-black/70 backdrop-blur-lg border border-white/20 text-white flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 shadow-2xl cursor-pointer"
+        className="!absolute left-2 sm:left-6 md:left-10 top-1/2 -translate-y-1/2 z-40 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/40 hover:bg-black/70 backdrop-blur-lg border border-white/20 text-white flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 shadow-2xl cursor-pointer"
       >
-        <ChevronLeft className="w-6 h-6" />
+        <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
       </button>
 
-      {/* Floating Glass Navigation Next Arrow (Anchored on Right) */}
+      {/* Right Chevron Button */}
       <button
         type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          handleNextTrack();
-        }}
+        onClick={handleNextTrack}
         aria-label="Next track"
-        className="!absolute right-3 sm:right-6 md:right-10 top-1/2 -translate-y-1/2 z-40 w-12 h-12 rounded-full bg-black/40 hover:bg-black/70 backdrop-blur-lg border border-white/20 text-white flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 shadow-2xl cursor-pointer"
+        className="!absolute right-2 sm:right-6 md:right-10 top-1/2 -translate-y-1/2 z-40 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/40 hover:bg-black/70 backdrop-blur-lg border border-white/20 text-white flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 shadow-2xl cursor-pointer"
       >
-        <ChevronRight className="w-6 h-6" />
+        <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
       </button>
 
-      {/* Side-by-Side Horizontal Cards Carousel Track with full Drag & Swipe */}
-      <div className="w-full flex items-center justify-start overflow-visible py-4">
-        <motion.div
-          className="relative flex items-center gap-6 sm:gap-8 px-12 sm:px-16 cursor-grab active:cursor-grabbing"
-          animate={{ x: translateX }}
-          transition={{
-            type: 'spring',
-            stiffness: 240,
-            damping: 26,
-            mass: 0.8,
-          }}
-          drag="x"
-          dragConstraints={{ left: 0, right: 0 }}
-          dragElastic={0.5}
-          onDragEnd={(_e, info) => {
-            const swipeDistance = info.offset.x;
-            const swipeVelocity = info.velocity.x;
+      {/* Endless 3D Circular Cylinder Carousel Stage */}
+      <div
+        className="relative w-full h-[415px] sm:h-[455px] flex items-center justify-center overflow-visible touch-pan-y"
+        style={{
+          perspective: 1200,
+          perspectiveOrigin: 'center center',
+          transformStyle: 'preserve-3d',
+        }}
+      >
+        {songs.map((song, index) => {
+          const diff = getCircularDiff(index, activeIndex, songs.length);
+          const absDiff = Math.abs(diff);
 
-            if (swipeDistance < -40 || swipeVelocity < -300) {
-              handleNextTrack();
-            } else if (swipeDistance > 40 || swipeVelocity > 300) {
-              handlePrevTrack();
-            } else {
-              updateCenterPosition();
-            }
-          }}
-        >
-          {songs.map((song, index) => {
-            const isActive = index === activeIndex;
-            const isCardPlaying = isActive && activePlaying;
+          // Render only cards visible in the circular arc
+          const maxVisibleDiff = isMobile ? 2 : 3;
+          if (absDiff > maxVisibleDiff + 1) return null;
 
-            return (
-              <motion.div
-                key={song.id}
-                ref={(el) => {
-                  cardRefs.current[index] = el;
-                }}
-                onClick={() => {
-                  if (!isActive) {
+          const isActive = diff === 0;
+          const isCardPlaying = isActive && activePlaying;
+
+          // 3D Circular Cylindrical Transformation
+          const spacing = isMobile ? 190 : 275;
+          const baseX = diff * spacing;
+          const x = baseX + liveDrag * Math.max(0.2, 1 - absDiff * 0.22);
+
+          const scale =
+            diff === 0
+              ? isCardPlaying
+                ? 1.08
+                : 1.02
+              : isMobile
+              ? Math.max(0.62, 0.84 - (absDiff - 1) * 0.18)
+              : Math.max(0.55, 0.88 - (absDiff - 1) * 0.14);
+
+          // Curve cards around the 3D cylinder
+          const rotateY =
+            diff === 0
+              ? 0
+              : diff > 0
+              ? Math.min(54, -22 - (absDiff - 1) * 15)
+              : Math.max(-54, 22 + (absDiff - 1) * 15);
+
+          const z =
+            diff === 0
+              ? isCardPlaying
+                ? 45
+                : 15
+              : -55 - (absDiff - 1) * 95;
+
+          const opacity =
+            diff === 0
+              ? 1
+              : absDiff === 1
+              ? 0.85
+              : absDiff === 2
+              ? (isMobile ? 0.35 : 0.45)
+              : absDiff === 3
+              ? 0.15
+              : 0;
+
+          const zIndex = 30 - absDiff * 7;
+
+          return (
+            <motion.div
+              key={song.id}
+              style={{
+                position: 'absolute',
+                left: '50%',
+                top: '50%',
+                marginLeft: isMobile ? -140 : -167,
+                marginTop: isMobile ? -192 : -207,
+                zIndex,
+                transformStyle: 'preserve-3d',
+              }}
+              animate={{
+                x,
+                scale,
+                rotateY,
+                z,
+                opacity,
+              }}
+              transition={{
+                type: 'spring',
+                stiffness: 280,
+                damping: 26,
+                mass: 0.8,
+              }}
+              drag={isActive ? 'x' : false}
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.4}
+              onDrag={(_e, info) => {
+                setLiveDrag(info.offset.x);
+              }}
+              onDragEnd={(_e, info) => {
+                setLiveDrag(0);
+                const swipeDistance = info.offset.x;
+                const swipeVelocity = info.velocity.x;
+
+                if (swipeDistance < -40 || swipeVelocity < -250) {
+                  handleNextTrack();
+                } else if (swipeDistance > 40 || swipeVelocity > 250) {
+                  handlePrevTrack();
+                }
+              }}
+              onClick={() => {
+                if (!isActive) {
+                  playTrack(index, true);
+                }
+              }}
+              className={`rounded-[32px] sm:rounded-[36px] cursor-pointer transition-shadow duration-300 ${
+                isCardPlaying
+                  ? 'shadow-[0_25px_60px_-10px_rgba(0,0,0,0.6),0_0_35px_rgba(59,130,246,0.4)]'
+                  : isActive
+                  ? 'shadow-[0_15px_35px_-8px_rgba(0,0,0,0.45)]'
+                  : 'shadow-[0_8px_25px_-6px_rgba(0,0,0,0.3)]'
+              }`}
+            >
+              <Card
+                song={song}
+                isPlaying={isCardPlaying}
+                isActive={isActive}
+                isBackground={!isActive}
+                index={index}
+                onTogglePlay={() => {
+                  if (isActive) {
+                    togglePlay();
+                  } else {
                     playTrack(index, true);
                   }
                 }}
-                animate={{
-                  scale: isCardPlaying ? 1.08 : isActive ? 1.02 : 0.92,
-                  opacity: isActive ? 1 : 0.75,
-                  y: isCardPlaying ? -6 : isActive ? -2 : 4,
-                }}
-                whileHover={{
-                  scale: isCardPlaying ? 1.1 : isActive ? 1.04 : 0.96,
-                  opacity: isActive ? 1 : 0.92,
-                }}
-                transition={{
-                  type: 'spring',
-                  stiffness: 280,
-                  damping: 24,
-                }}
-                className={`flex-shrink-0 cursor-pointer transition-shadow duration-300 rounded-[28px] ${
-                  isCardPlaying
-                    ? 'z-30 shadow-[0_25px_60px_-10px_rgba(0,0,0,0.6),0_0_30px_rgba(59,130,246,0.35)]'
-                    : isActive
-                    ? 'z-20 shadow-[0_15px_35px_-8px_rgba(0,0,0,0.4)]'
-                    : 'z-10 shadow-[0_8px_20px_-6px_rgba(0,0,0,0.25)]'
-                }`}
-              >
-                <Card
-                  song={song}
-                  isPlaying={isCardPlaying}
-                  isActive={isActive}
-                  isBackground={false}
-                  index={index}
-                  onTogglePlay={() => {
-                    if (isActive) {
-                      togglePlay();
-                    } else {
-                      playTrack(index, true);
-                    }
-                  }}
-                  onNext={handleNextTrack}
-                  onPrev={handlePrevTrack}
-                  onShare={onShare}
-                />
-              </motion.div>
-            );
-          })}
-        </motion.div>
+                onNext={handleNextTrack}
+                onPrev={handlePrevTrack}
+                onShare={onShare}
+              />
+            </motion.div>
+          );
+        })}
       </div>
     </div>
   );

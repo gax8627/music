@@ -81,36 +81,34 @@ export default function SongList({
 
         {/* Controls: Shuffle, Loop, Sort Toggle + Search */}
         <div className="flex items-center flex-wrap gap-2 w-full sm:w-auto justify-start sm:justify-end">
-          {/* Shuffle Mode Toggle */}
+          {/* Shuffle Mode Toggle (Icon only) */}
           <button
             type="button"
             onClick={onToggleShuffle}
             aria-label="Toggle shuffle"
-            className={`liquid-glass rounded-xl px-3 py-2 text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer shrink-0 ${
+            className={`liquid-glass rounded-xl p-2.5 transition-all cursor-pointer shrink-0 ${
               isShuffle
                 ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30 font-semibold'
                 : 'text-white hover:bg-white/15'
             }`}
-            title="Toggle shuffle mode"
+            title={isShuffle ? 'Shuffle Active' : 'Toggle shuffle mode'}
           >
-            <PremiumShuffleIcon size={13} className={isShuffle ? 'animate-pulse' : ''} />
-            <span className="hidden sm:inline">Shuffle</span>
+            <PremiumShuffleIcon size={14} className={isShuffle ? 'animate-pulse' : ''} />
           </button>
 
-          {/* Loop Forever Toggle */}
+          {/* Loop Forever Toggle (Icon only) */}
           <button
             type="button"
             onClick={onToggleLoopForever}
             aria-label="Toggle loop all"
-            className={`liquid-glass rounded-xl px-3 py-2 text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer shrink-0 ${
+            className={`liquid-glass rounded-xl p-2.5 transition-all cursor-pointer shrink-0 ${
               isLoopForever
                 ? 'bg-emerald-600/90 text-white shadow-md shadow-emerald-500/30 font-semibold'
                 : 'text-white hover:bg-white/15'
             }`}
-            title="Toggle continuous loop of all 33 songs"
+            title={isLoopForever ? 'Loop Forever Active' : 'Toggle continuous loop'}
           >
-            <PremiumLoopIcon size={13} />
-            <span className="hidden sm:inline">Loop All</span>
+            <PremiumLoopIcon size={14} />
           </button>
 
           {/* Sort order toggle button */}
