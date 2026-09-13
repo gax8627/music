@@ -340,7 +340,7 @@ const SpectrumEqVisualizer: React.FC<{
           transition={{
             duration: bar.speed,
             delay: bar.delay,
-            repeat: Infinity,
+            repeat: isPlaying ? Infinity : 0,
             repeatType: 'reverse',
             ease: 'easeInOut',
           }}
@@ -375,7 +375,7 @@ const RadialOrbitVisualizer: React.FC<{
         }}
         transition={{
           duration: 1.2,
-          repeat: Infinity,
+          repeat: isPlaying ? Infinity : 0,
           ease: 'easeInOut',
         }}
       >
@@ -399,7 +399,7 @@ const RadialOrbitVisualizer: React.FC<{
           transition={{
             duration: 1.5 + i * 0.4,
             delay: i * 0.25,
-            repeat: Infinity,
+            repeat: isPlaying ? Infinity : 0,
             ease: 'easeInOut',
           }}
         />
@@ -412,7 +412,7 @@ const RadialOrbitVisualizer: React.FC<{
           animate={{ rotate: isPlaying ? 360 : 45 }}
           transition={{
             duration: 5,
-            repeat: Infinity,
+            repeat: isPlaying ? Infinity : 0,
             ease: 'linear',
           }}
         >
@@ -482,7 +482,7 @@ const AnalogSineVisualizer: React.FC<{
           }
           transition={{
             duration: 1.4,
-            repeat: Infinity,
+            repeat: isPlaying ? Infinity : 0,
             repeatType: 'mirror',
             ease: 'easeInOut',
           }}
@@ -509,7 +509,7 @@ const AnalogSineVisualizer: React.FC<{
             }
             transition={{
               duration: 1.8,
-              repeat: Infinity,
+              repeat: isPlaying ? Infinity : 0,
               repeatType: 'mirror',
               ease: 'easeInOut',
             }}
@@ -562,7 +562,7 @@ const MatrixLedVisualizer: React.FC<{
                 transition={{
                   duration: 0.3 + (colIdx % 3) * 0.15,
                   delay: (colIdx * 0.05) + (segIdx * 0.02),
-                  repeat: Infinity,
+                  repeat: isPlaying ? Infinity : 0,
                   repeatType: 'reverse',
                 }}
               />
@@ -615,7 +615,7 @@ const BilateralWaveVisualizer: React.FC<{
           transition={{
             duration: bar.speed,
             delay: bar.delay,
-            repeat: Infinity,
+            repeat: isPlaying ? Infinity : 0,
             repeatType: 'reverse',
             ease: 'easeInOut',
           }}
@@ -662,7 +662,7 @@ const HorizonFluxVisualizer: React.FC<{
                 }
               : {}
           }
-          transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+          transition={{ duration: 2.2, repeat: isPlaying ? Infinity : 0, ease: 'easeInOut' }}
         />
 
         <motion.path
@@ -681,7 +681,7 @@ const HorizonFluxVisualizer: React.FC<{
                 }
               : {}
           }
-          transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+          transition={{ duration: 1.6, repeat: isPlaying ? Infinity : 0, ease: 'easeInOut' }}
         />
       </svg>
     </div>
@@ -711,8 +711,8 @@ const SonicIrisVisualizer: React.FC<{
           scale: isPlaying ? [1, 1.15, 0.95] : 1,
         }}
         transition={{
-          rotate: { duration: 8, repeat: Infinity, ease: 'linear' },
-          scale: { duration: 1.4, repeat: Infinity, ease: 'easeInOut' },
+          rotate: { duration: 8, repeat: isPlaying ? Infinity : 0, ease: 'linear' },
+          scale: { duration: 1.4, repeat: isPlaying ? Infinity : 0, ease: 'easeInOut' },
         }}
       />
 
@@ -729,8 +729,8 @@ const SonicIrisVisualizer: React.FC<{
           scale: isPlaying ? [1.1, 0.9, 1.1] : 1,
         }}
         transition={{
-          rotate: { duration: 6, repeat: Infinity, ease: 'linear' },
-          scale: { duration: 1.1, repeat: Infinity, ease: 'easeInOut' },
+          rotate: { duration: 6, repeat: isPlaying ? Infinity : 0, ease: 'linear' },
+          scale: { duration: 1.1, repeat: isPlaying ? Infinity : 0, ease: 'easeInOut' },
         }}
       />
 
@@ -746,7 +746,7 @@ const SonicIrisVisualizer: React.FC<{
         }}
         transition={{
           duration: 0.9,
-          repeat: Infinity,
+          repeat: isPlaying ? Infinity : 0,
           ease: 'easeInOut',
         }}
       />
@@ -778,7 +778,7 @@ const QuantumVortexVisualizer: React.FC<{
         }}
         transition={{
           duration: 1.1,
-          repeat: Infinity,
+          repeat: isPlaying ? Infinity : 0,
           ease: 'easeInOut',
         }}
       />
@@ -790,7 +790,7 @@ const QuantumVortexVisualizer: React.FC<{
         }}
         transition={{
           duration: 7,
-          repeat: Infinity,
+          repeat: isPlaying ? Infinity : 0,
           ease: 'linear',
         }}
       >
@@ -817,7 +817,7 @@ const QuantumVortexVisualizer: React.FC<{
               }}
               transition={{
                 duration: 1.2 + i * 0.2,
-                repeat: Infinity,
+                repeat: isPlaying ? Infinity : 0,
                 ease: 'easeInOut',
               }}
             />

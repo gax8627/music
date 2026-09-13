@@ -1,7 +1,8 @@
 // Share token utilities
-// Converts sequential song IDs into short, unguessable tokens for share URLs.
-// Uses SHA-256 via SubtleCrypto (async) for token generation.
-// Token format: 12-char base64url (URL-safe, no padding).
+// URL format: ?s=<slug>.<token>
+// - slug: human-readable song title (cosmetic only, not used for validation)
+// - token: 12-char SHA-256 derived base64url (used for security validation)
+// Example: ?s=un-simple-te-extrano.aB3kP9xQr2
 
 const SHARE_SALT = 'qp_2026_rg';
 const TOKEN_LENGTH = 12;
@@ -35,8 +36,24 @@ const isCryptoAvailable =
   typeof crypto.subtle.digest === 'function';
 
 /**
- * Encode a song ID into a share token.
- * Returns a Promise<string> of a 12-char base64url token.
+ * Converts a song title into a clean URL slug.
+ * Strips diacritics, lowercases, replaces spaces with hyphens.
+ * Max 45 chars so URLs stay readable.
+ */
+export function slugify(title: string): string {
+  return title
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // strip diacritics (é→e, ñ→n, etc.)
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')   // keep alphanumeric, spaces, hyphens
+    .trim()
+    .replace(/\s+/g, '-')           // spaces → hyphens
+    .replace(/-+/g, '-')            // collapse multiple hyphens
+    .slice(0, 45);                  // max length
+}
+
+/**
+ * Encode a song ID into a 12-char base64url token.
  */
 export async function encodeShareToken(songId: string): Promise<string> {
   if (isCryptoAvailable) {
@@ -46,13 +63,18 @@ export async function encodeShareToken(songId: string): Promise<string> {
 }
 
 /**
- * Decode a share token back to a song ID by checking all known IDs.
+ * Decode a share token back to a song ID.
+ * The value may be a plain token or "slug.token" — only the token (last TOKEN_LENGTH chars after '.') is validated.
  * Returns the matching song ID string, or null if not found.
  */
 export async function decodeShareToken(
-  token: string,
+  value: string,
   allSongIds: string[]
 ): Promise<string | null> {
+  // Support both "slug.token" and plain "token" formats
+  const dotIdx = value.lastIndexOf('.');
+  const token = dotIdx !== -1 ? value.slice(dotIdx + 1) : value;
+
   for (const id of allSongIds) {
     const candidate = isCryptoAvailable ? await hashToken(id) : hashTokenSync(id);
     if (candidate === token) return id;
@@ -61,10 +83,12 @@ export async function decodeShareToken(
 }
 
 /**
- * Build a complete share URL for a song.
+ * Build a complete share URL for a song, including a human-readable slug.
+ * Format: https://example.com/?s=song-title-slug.aB3kP9xQr2
  */
-export async function buildShareUrl(songId: string): Promise<string> {
+export async function buildShareUrl(songId: string, title: string): Promise<string> {
   const token = await encodeShareToken(songId);
+  const slug = slugify(title);
   const base = `${window.location.origin}${window.location.pathname}`;
-  return `${base}?s=${token}`;
+  return `${base}?s=${slug}.${token}`;
 }

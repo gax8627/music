@@ -376,7 +376,7 @@ export default function App() {
   // Keep URL updated when navigating tracks while in private view (async token generation)
   useEffect(() => {
     if (isPrivateView && currentTrack) {
-      buildShareUrl(currentTrack.id).then((url) => {
+      buildShareUrl(currentTrack.id, currentTrack.title).then((url) => {
         const newSearch = '?s=' + url.split('?s=')[1];
         if (window.location.search !== newSearch) {
           window.history.replaceState(null, '', url);
@@ -385,14 +385,17 @@ export default function App() {
     }
   }, [isPrivateView, currentTrack]);
 
-  // Share song: generate token URL and copy to clipboard
+  // Share song: generate token URL (with readable slug) and copy to clipboard
   const handleShare = useCallback((songId: string) => {
     const triggerToast = () => {
       setCopiedToast(true);
       setTimeout(() => setCopiedToast(false), 2500);
     };
 
-    buildShareUrl(songId).then((shareUrl) => {
+    const track = tracks.find((t) => t.id === songId);
+    const title = track?.title ?? songId;
+
+    buildShareUrl(songId, title).then((shareUrl) => {
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard
           .writeText(shareUrl)
@@ -406,7 +409,7 @@ export default function App() {
         triggerToast();
       }
     });
-  }, []);
+  }, [tracks]);
 
   const fallbackCopy = (text: string) => {
     try {
