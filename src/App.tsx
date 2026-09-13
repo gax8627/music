@@ -166,6 +166,27 @@ export default function App() {
     }
   }, [isShuffle, currentIndex, tracks.length, isPlaying, selectSong]);
 
+  // Toggle shuffle mode: automatically picks a random track and starts playback immediately
+  const handleToggleShuffle = useCallback(() => {
+    setIsShuffle((prev) => {
+      const nextState = !prev;
+      // When turning ON or clicking shuffle: immediately select a different random song and play automatically!
+      const availableIndices = tracks
+        .map((_, i) => i)
+        .filter((i) => i !== currentIndex);
+      const chosen =
+        availableIndices[Math.floor(Math.random() * availableIndices.length)] ?? 0;
+      playedInShuffleRef.current.clear();
+      playedInShuffleRef.current.add(chosen);
+      historyRef.current = [currentIndex, chosen];
+
+      // Auto play the shuffled track immediately!
+      selectSong(chosen, true);
+
+      return nextState;
+    });
+  }, [tracks, currentIndex, selectSong]);
+
   // Global keyboard shortcuts (Left/Right arrows, Space)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -339,7 +360,7 @@ export default function App() {
           onShare={handleShare}
           audioRef={audioRef}
           isShuffle={isShuffle}
-          onToggleShuffle={() => setIsShuffle((prev) => !prev)}
+          onToggleShuffle={handleToggleShuffle}
           isLoopForever={isLoopForever}
           onToggleLoopForever={() => setIsLoopForever((prev) => !prev)}
           copiedToast={copiedToast}
@@ -355,7 +376,7 @@ export default function App() {
               onSelectSong={selectSong}
               audioRef={audioRef}
               isShuffle={isShuffle}
-              onToggleShuffle={() => setIsShuffle((prev) => !prev)}
+              onToggleShuffle={handleToggleShuffle}
               isLoopForever={isLoopForever}
               onToggleLoopForever={() => setIsLoopForever((prev) => !prev)}
               onNext={() => handleNext(true)}
@@ -381,7 +402,7 @@ export default function App() {
               isPlaying={isPlaying}
               onSelectSong={selectSong}
               isShuffle={isShuffle}
-              onToggleShuffle={() => setIsShuffle((prev) => !prev)}
+              onToggleShuffle={handleToggleShuffle}
               isLoopForever={isLoopForever}
               onToggleLoopForever={() => setIsLoopForever((prev) => !prev)}
               onShare={handleShare}

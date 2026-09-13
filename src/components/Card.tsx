@@ -113,7 +113,8 @@ export default function Card({
                 <img
                   src={song.cover}
                   alt=""
-                  className="w-full h-full object-cover select-none"
+                  draggable={false}
+                  className="w-full h-full object-cover select-none pointer-events-none"
                 />
                 <div className="absolute w-3 h-3 rounded-full bg-zinc-950 border border-white/60 shadow-inner" />
               </div>
@@ -125,7 +126,8 @@ export default function Card({
             <img
               src={song.cover}
               alt={song.title}
-              className="w-full h-full object-cover select-none transition-transform duration-500 hover:scale-105"
+              draggable={false}
+              className="w-full h-full object-cover select-none pointer-events-none transition-transform duration-500 hover:scale-105"
             />
             <div className="absolute inset-0 bg-gradient-to-tr from-black/20 via-transparent to-white/20 pointer-events-none" />
           </div>

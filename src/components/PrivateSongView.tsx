@@ -284,10 +284,10 @@ export const PrivateSongView: React.FC<PrivateSongViewProps> = ({
           <button
             type="button"
             onClick={onToggleShuffle}
-            title={isShuffle ? 'Shuffle Active' : 'Enable Shuffle'}
+            title={isShuffle ? 'Shuffle Active (Plays automatically)' : 'Enable Shuffle'}
             className={`p-2.5 rounded-full transition-all cursor-pointer ${
               isShuffle
-                ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/40 ring-1 ring-blue-400 scale-105'
+                ? 'bg-white text-zinc-950 shadow-[0_0_20px_rgba(255,255,255,0.45)] ring-1 ring-white scale-105'
                 : 'text-white/60 hover:text-white hover:bg-white/10'
             }`}
           >
@@ -337,10 +337,10 @@ export const PrivateSongView: React.FC<PrivateSongViewProps> = ({
             <button
               type="button"
               onClick={onToggleLoopForever}
-              title={isLoopForever ? 'Loop Forever Active' : 'Enable Loop'}
+              title={isLoopForever ? 'Loop Active (All 33 Songs)' : 'Enable Loop'}
               className={`p-2.5 rounded-full transition-all cursor-pointer ${
                 isLoopForever
-                  ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/40 ring-1 ring-emerald-400 scale-105'
+                  ? 'bg-white text-zinc-950 shadow-[0_0_20px_rgba(255,255,255,0.45)] ring-1 ring-white scale-105'
                   : 'text-white/60 hover:text-white hover:bg-white/10'
               }`}
             >

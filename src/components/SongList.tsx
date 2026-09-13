@@ -81,32 +81,32 @@ export default function SongList({
 
         {/* Controls: Shuffle, Loop, Sort Toggle + Search */}
         <div className="flex items-center flex-wrap gap-2 w-full sm:w-auto justify-start sm:justify-end">
-          {/* Shuffle Mode Toggle (Icon only) */}
+          {/* Shuffle Mode Toggle (Luxury Monochrome Icon) */}
           <button
             type="button"
             onClick={onToggleShuffle}
             aria-label="Toggle shuffle"
-            className={`liquid-glass rounded-xl p-2.5 transition-all cursor-pointer shrink-0 ${
+            className={`rounded-xl p-2.5 transition-all cursor-pointer shrink-0 ${
               isShuffle
-                ? 'bg-blue-600 text-white shadow-md shadow-blue-500/30 font-semibold'
-                : 'text-white hover:bg-white/15'
+                ? 'bg-white text-zinc-950 shadow-[0_0_16px_rgba(255,255,255,0.4)] ring-1 ring-white scale-105'
+                : 'liquid-glass text-white/60 hover:text-white hover:bg-white/15 active:scale-95'
             }`}
-            title={isShuffle ? 'Shuffle Active' : 'Toggle shuffle mode'}
+            title={isShuffle ? 'Shuffle Active (Plays automatically)' : 'Shuffle music'}
           >
             <PremiumShuffleIcon size={14} className={isShuffle ? 'animate-pulse' : ''} />
           </button>
 
-          {/* Loop Forever Toggle (Icon only) */}
+          {/* Loop Forever Toggle (Luxury Monochrome Icon) */}
           <button
             type="button"
             onClick={onToggleLoopForever}
             aria-label="Toggle loop all"
-            className={`liquid-glass rounded-xl p-2.5 transition-all cursor-pointer shrink-0 ${
+            className={`rounded-xl p-2.5 transition-all cursor-pointer shrink-0 ${
               isLoopForever
-                ? 'bg-emerald-600/90 text-white shadow-md shadow-emerald-500/30 font-semibold'
-                : 'text-white hover:bg-white/15'
+                ? 'bg-white text-zinc-950 shadow-[0_0_16px_rgba(255,255,255,0.4)] ring-1 ring-white scale-105'
+                : 'liquid-glass text-white/60 hover:text-white hover:bg-white/15 active:scale-95'
             }`}
-            title={isLoopForever ? 'Loop Forever Active' : 'Toggle continuous loop'}
+            title={isLoopForever ? 'Loop Active (All 33 Songs)' : 'Toggle continuous loop'}
           >
             <PremiumLoopIcon size={14} />
           </button>

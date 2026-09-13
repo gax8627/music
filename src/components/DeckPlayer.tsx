@@ -133,18 +133,31 @@ export default function DeckPlayer({
     }
   }, [onPrev, handlePrev]);
 
-  // Trackpad / Mouse horizontal wheel support with cooldown and dominant horizontal check
+  // Comprehensive Wheel & Trackpad Gesture Engine
   const lastWheelTime = useRef(0);
   const handleWheel = useCallback(
     (e: React.WheelEvent) => {
       const now = Date.now();
-      const absX = Math.abs(e.deltaX);
-      const absY = Math.abs(e.deltaY);
+      const deltaX = e.deltaX;
+      const deltaY = e.deltaY;
+      const absX = Math.abs(deltaX);
+      const absY = Math.abs(deltaY);
 
-      // Dominant horizontal axis and 350ms throttle to prevent macOS trackpad inertial skipping
-      if (absX > 30 && absX > absY * 1.5 && now - lastWheelTime.current > 350) {
+      // Trackpad horizontal swipe
+      if (absX > 15 && absX > absY * 0.9 && now - lastWheelTime.current > 300) {
         lastWheelTime.current = now;
-        if (e.deltaX > 0) {
+        if (deltaX > 0) {
+          handleNextTrack();
+        } else {
+          handlePrevTrack();
+        }
+        return;
+      }
+
+      // Mouse wheel vertical scroll over carousel cards
+      if (absY > 25 && now - lastWheelTime.current > 320) {
+        lastWheelTime.current = now;
+        if (deltaY > 0) {
           handleNextTrack();
         } else {
           handlePrevTrack();
@@ -154,11 +167,104 @@ export default function DeckPlayer({
     [handleNextTrack, handlePrevTrack]
   );
 
+  // Touch Swipe Engine for fingers on mobile, tablet & touchscreens
+  const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
+  const isTouching = useRef(false);
+  const isHorizontalSwipe = useRef<boolean | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    if (!touch) return;
+    touchStartX.current = touch.clientX;
+    touchStartY.current = touch.clientY;
+    isTouching.current = true;
+    isHorizontalSwipe.current = null;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isTouching.current) return;
+    const touch = e.touches[0];
+    if (!touch) return;
+
+    const deltaX = touch.clientX - touchStartX.current;
+    const deltaY = touch.clientY - touchStartY.current;
+
+    if (isHorizontalSwipe.current === null) {
+      if (Math.abs(deltaX) > 6 || Math.abs(deltaY) > 6) {
+        isHorizontalSwipe.current = Math.abs(deltaX) >= Math.abs(deltaY);
+      }
+    }
+
+    if (isHorizontalSwipe.current) {
+      setLiveDrag(deltaX);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!isTouching.current) return;
+    isTouching.current = false;
+    const drag = liveDrag;
+    setLiveDrag(0);
+
+    if (isHorizontalSwipe.current) {
+      if (drag < -35) {
+        handleNextTrack();
+      } else if (drag > 35) {
+        handlePrevTrack();
+      }
+    }
+    isHorizontalSwipe.current = null;
+  };
+
+  // Mouse Drag Engine for desktop / laptop
+  const mouseStartX = useRef(0);
+  const isMouseDown = useRef(false);
+  const hasMovedMouse = useRef(false);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest('button')) return;
+    if (e.button !== 0) return; // primary left click only
+
+    mouseStartX.current = e.clientX;
+    isMouseDown.current = true;
+    hasMovedMouse.current = false;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isMouseDown.current) return;
+    const deltaX = e.clientX - mouseStartX.current;
+    if (Math.abs(deltaX) > 5) {
+      hasMovedMouse.current = true;
+      setLiveDrag(deltaX);
+    }
+  };
+
+  const handleMouseUp = () => {
+    if (!isMouseDown.current) return;
+    isMouseDown.current = false;
+    const drag = liveDrag;
+    setLiveDrag(0);
+
+    if (hasMovedMouse.current) {
+      if (drag < -35) {
+        handleNextTrack();
+      } else if (drag > 35) {
+        handlePrevTrack();
+      }
+    }
+
+    setTimeout(() => {
+      hasMovedMouse.current = false;
+    }, 50);
+  };
+
   return (
     <div
       ref={containerRef}
       onWheel={handleWheel}
-      className={`relative w-full overflow-hidden flex flex-col items-center justify-center py-2 select-none touch-pan-y ${className}`}
+      className={`relative w-full overflow-hidden flex flex-col items-center justify-center py-2 select-none ${className}`}
     >
       {/* Fallback Internal Audio Element if no external audio ref provided */}
       {!audioRef && (
@@ -171,36 +277,36 @@ export default function DeckPlayer({
         />
       )}
 
-      {/* Playback Mode Floating Glass Pill (Icon Only: Shuffle & Loop Forever) */}
-      <div className="z-30 mb-2 sm:mb-4 flex items-center gap-2 bg-black/40 hover:bg-black/60 backdrop-blur-lg p-1 rounded-full border border-white/15 shadow-xl select-none transition-all">
-        {/* Shuffle Mode Toggle (Icon only) */}
+      {/* Playback Mode Floating Glass Pill (Luxury Monochrome Icons) */}
+      <div className="z-30 mb-2 sm:mb-4 flex items-center gap-2 bg-black/50 hover:bg-black/70 backdrop-blur-xl p-1.5 rounded-full border border-white/15 shadow-2xl select-none transition-all">
+        {/* Shuffle Mode Toggle */}
         <button
           type="button"
           onClick={onToggleShuffle}
-          title={isShuffle ? 'Shuffle Active' : 'Enable Shuffle'}
+          title={isShuffle ? 'Shuffle Active (Plays automatically)' : 'Shuffle Music'}
           aria-label="Toggle shuffle"
           className={`rounded-full p-2.5 transition-all cursor-pointer ${
             isShuffle
-              ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30 scale-105 ring-1 ring-blue-400'
-              : 'text-white/70 hover:text-white hover:bg-white/10 hover:scale-105 active:scale-95'
+              ? 'bg-white text-zinc-950 shadow-[0_0_20px_rgba(255,255,255,0.45)] ring-1 ring-white scale-105'
+              : 'text-white/60 hover:text-white hover:bg-white/10 active:scale-95'
           }`}
         >
-          <PremiumShuffleIcon size={15} className={isShuffle ? 'animate-pulse' : ''} />
+          <PremiumShuffleIcon size={16} className={isShuffle ? 'animate-pulse' : ''} />
         </button>
 
-        {/* Loop Forever Toggle (Icon only) */}
+        {/* Loop Forever Toggle */}
         <button
           type="button"
           onClick={onToggleLoopForever}
-          title={isLoopForever ? 'Loop Forever Active (All 33 Songs)' : 'Loop Off'}
+          title={isLoopForever ? 'Loop Active (All 33 Songs)' : 'Loop Off'}
           aria-label="Toggle loop forever"
           className={`rounded-full p-2.5 transition-all cursor-pointer ${
             isLoopForever
-              ? 'bg-emerald-600/90 text-white shadow-lg shadow-emerald-500/30 scale-105 ring-1 ring-emerald-400'
-              : 'text-white/70 hover:text-white hover:bg-white/10 hover:scale-105 active:scale-95'
+              ? 'bg-white text-zinc-950 shadow-[0_0_20px_rgba(255,255,255,0.45)] ring-1 ring-white scale-105'
+              : 'text-white/60 hover:text-white hover:bg-white/10 active:scale-95'
           }`}
         >
-          <PremiumLoopIcon size={15} />
+          <PremiumLoopIcon size={16} />
         </button>
       </div>
 
@@ -224,9 +330,17 @@ export default function DeckPlayer({
         <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
       </button>
 
-      {/* Endless 3D Circular Cylinder Carousel Stage */}
+      {/* Endless 3D Circular Cylinder Carousel Stage with Full Touch & Mouse Drag */}
       <div
-        className="relative w-full h-[415px] sm:h-[455px] flex items-center justify-center overflow-visible touch-pan-y"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        className="relative w-full h-[415px] sm:h-[455px] flex items-center justify-center overflow-visible select-none cursor-grab active:cursor-grabbing touch-pan-y"
         style={{
           perspective: 1200,
           perspectiveOrigin: 'center center',
@@ -311,24 +425,8 @@ export default function DeckPlayer({
                 damping: 26,
                 mass: 0.8,
               }}
-              drag={isActive ? 'x' : false}
-              dragConstraints={{ left: 0, right: 0 }}
-              dragElastic={0.4}
-              onDrag={(_e, info) => {
-                setLiveDrag(info.offset.x);
-              }}
-              onDragEnd={(_e, info) => {
-                setLiveDrag(0);
-                const swipeDistance = info.offset.x;
-                const swipeVelocity = info.velocity.x;
-
-                if (swipeDistance < -40 || swipeVelocity < -250) {
-                  handleNextTrack();
-                } else if (swipeDistance > 40 || swipeVelocity > 250) {
-                  handlePrevTrack();
-                }
-              }}
               onClick={() => {
+                if (hasMovedMouse.current) return;
                 if (!isActive) {
                   playTrack(index, true);
                 }
@@ -348,6 +446,7 @@ export default function DeckPlayer({
                 isBackground={!isActive}
                 index={index}
                 onTogglePlay={() => {
+                  if (hasMovedMouse.current) return;
                   if (isActive) {
                     togglePlay();
                   } else {
