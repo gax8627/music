@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Play, Pause, Search, Heart, Headphones, Calendar, ArrowUpDown } from 'lucide-react';
+import { Play, Pause, Search, ThumbsUp, Headphones, Calendar, ArrowUpDown } from 'lucide-react';
 import { Song } from './Card';
 import { PremiumShuffleIcon, PremiumLoopIcon, PremiumShareIcon } from './PremiumIcons';
 import CardVisualizerCover from './CardVisualizerCover';
@@ -15,6 +15,8 @@ export interface SongListProps {
   isLoopForever?: boolean;
   onToggleLoopForever?: () => void;
   onShare?: (songId: string) => void;
+  thumbsUpCounts?: Record<string, number>;
+  onThumbsUp?: (songId: string) => void;
 }
 
 export default function SongList({
@@ -28,18 +30,32 @@ export default function SongList({
   isLoopForever = true,
   onToggleLoopForever,
   onShare,
+  thumbsUpCounts = {},
+  onThumbsUp,
 }: SongListProps) {
+  type SortMode = 'oldest' | 'newest' | 'most-played';
+  const [sortMode, setSortMode] = useState<SortMode>('oldest');
+
+  const cycleSortMode = () => {
+    setSortMode((prev) => {
+      if (prev === 'oldest') return 'newest';
+      if (prev === 'newest') return 'most-played';
+      return 'oldest';
+    });
+  };
+
+  const sortLabel: Record<SortMode, string> = {
+    oldest: 'Oldest First',
+    newest: 'Newest First',
+    'most-played': 'Most Played',
+  };
+
   const [searchQuery, setSearchQuery] = useState('');
-  const [likedMap, setLikedMap] = useState<Record<string, boolean>>({});
-  const [isNewestFirst, setIsNewestFirst] = useState(false);
 
   const totalDurationLabel = useMemo(() => {
     const totalSecs = songs.reduce(
       (acc, s) =>
-        acc +
-        (typeof s.duration === 'number'
-          ? s.duration
-          : parseFloat(String(s.duration)) || 0),
+        acc + (typeof s.duration === 'number' ? s.duration : parseFloat(String(s.duration)) || 0),
       0
     );
     const hrs = Math.floor(totalSecs / 3600);
@@ -47,19 +63,22 @@ export default function SongList({
     return hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`;
   }, [songs]);
 
-  const toggleLike = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setLikedMap((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
-
   const stripAccents = (str: string) =>
     str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
   const processedSongs = useMemo(() => {
     let list = songs.map((song, originalIdx) => ({ song, originalIdx }));
-    if (isNewestFirst) {
+
+    if (sortMode === 'newest') {
       list = [...list].reverse();
+    } else if (sortMode === 'most-played') {
+      list = [...list].sort((a, b) => {
+        const pa = typeof a.song.plays === 'number' ? a.song.plays : 0;
+        const pb = typeof b.song.plays === 'number' ? b.song.plays : 0;
+        return pb - pa;
+      });
     }
+
     const q = stripAccents(searchQuery.trim());
     if (!q) return list;
 
@@ -69,7 +88,7 @@ export default function SongList({
         stripAccents(song.artist).includes(q) ||
         (song.createdDate && stripAccents(song.createdDate).includes(q))
     );
-  }, [songs, searchQuery, isNewestFirst]);
+  }, [songs, searchQuery, sortMode]);
 
   return (
     <div
@@ -126,18 +145,20 @@ export default function SongList({
             <PremiumLoopIcon size={14} />
           </button>
 
-          {/* Sort order toggle button */}
+          {/* Sort order toggle — cycles: Oldest → Newest → Most Played */}
           <button
             type="button"
-            onClick={() => setIsNewestFirst((prev) => !prev)}
-            aria-label="Toggle chronological order"
-            className="liquid-glass rounded-xl px-3 py-2 text-xs font-medium text-white hover:bg-white/15 flex items-center gap-1.5 transition-all cursor-pointer shrink-0"
-            title="Toggle sort order"
+            onClick={cycleSortMode}
+            aria-label="Change sort order"
+            className={`liquid-glass rounded-xl px-3 py-2 text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer shrink-0 ${
+              sortMode === 'most-played'
+                ? 'bg-blue-500/20 text-blue-300 border border-blue-400/30'
+                : 'text-white hover:bg-white/15'
+            }`}
+            title="Cycle sort: Oldest → Newest → Most Played"
           >
             <ArrowUpDown size={13} />
-            <span className="hidden sm:inline">
-              {isNewestFirst ? 'Newest First' : 'Oldest First'}
-            </span>
+            <span className="hidden sm:inline">{sortLabel[sortMode]}</span>
           </button>
 
           {/* Quick Search */}
@@ -168,7 +189,7 @@ export default function SongList({
           processedSongs.map(({ song, originalIdx }) => {
             const isActive = originalIdx === currentIndex;
             const isSongPlaying = isActive && isPlaying;
-            const isLiked = Boolean(likedMap[song.id]);
+            const thumbsCount = thumbsUpCounts[song.id] ?? 0;
             const playCount = typeof song.plays === 'number' ? song.plays : 0;
             const playLabel = `${playCount} ${playCount === 1 ? 'play' : 'plays'}`;
 
@@ -277,17 +298,30 @@ export default function SongList({
                     </button>
                   )}
 
-                  {/* Heart / Favorite */}
+                  {/* Thumbs Up + Count */}
                   <button
                     type="button"
-                    onClick={(e) => toggleLike(song.id, e)}
-                    aria-label="Favorite song"
-                    className="p-1 sm:p-1.5 text-white/40 hover:text-white transition-colors cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onThumbsUp?.(song.id);
+                    }}
+                    aria-label="Thumbs up"
+                    title="Like this track"
+                    className={`flex items-center gap-1 p-1 sm:p-1.5 rounded-lg transition-all cursor-pointer group/thumb ${
+                      thumbsCount > 0
+                        ? 'text-blue-400 hover:text-blue-300'
+                        : 'text-white/30 hover:text-blue-400'
+                    }`}
                   >
-                    <Heart
+                    <ThumbsUp
                       size={13}
-                      className={isLiked ? 'fill-red-500 text-red-500' : ''}
+                      className={`transition-transform group-hover/thumb:scale-110 active:scale-95 ${thumbsCount > 0 ? 'fill-blue-400' : ''}`}
                     />
+                    {thumbsCount > 0 && (
+                      <span className="text-[11px] font-mono font-semibold leading-none">
+                        {thumbsCount}
+                      </span>
+                    )}
                   </button>
                 </div>
               </div>

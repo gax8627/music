@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Play, Pause, SkipBack, SkipForward, Headphones, Calendar } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Headphones, Calendar, ThumbsUp } from 'lucide-react';
 import Waveform from './Waveform';
 import { formatTime } from '../data/tracks';
 import { PremiumShareIcon } from './PremiumIcons';
@@ -35,6 +35,8 @@ export interface CardProps {
   isActive?: boolean;
   className?: string;
   onShare?: (songId: string) => void;
+  thumbsUpCount?: number;
+  onThumbsUp?: (songId: string) => void;
 }
 
 export default function Card({
@@ -47,6 +49,8 @@ export default function Card({
   isActive = false,
   className = '',
   onShare,
+  thumbsUpCount = 0,
+  onThumbsUp,
 }: CardProps) {
   const isExpanded = isPlaying || isActive;
   const playCount = typeof song.plays === 'number' ? song.plays : 0;
@@ -193,9 +197,36 @@ export default function Card({
 
       {/* Mini Player Controls */}
       <div className="relative z-10 flex items-center justify-between mt-2 pt-2 border-t border-zinc-100">
-        <span className="text-[11px] font-mono text-zinc-400 font-semibold tracking-wider uppercase">
-          180g Wax · Demo
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] font-mono text-zinc-400 font-semibold tracking-wider uppercase">
+            180g Wax
+          </span>
+          {/* Thumbs Up + Count */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onThumbsUp?.(song.id);
+            }}
+            aria-label="Thumbs up"
+            title="Like this track"
+            className={`flex items-center gap-1 px-1.5 py-0.5 rounded-lg transition-all cursor-pointer group/thumb ${
+              thumbsUpCount > 0
+                ? 'text-blue-600 hover:text-blue-700'
+                : 'text-zinc-400 hover:text-blue-500'
+            }`}
+          >
+            <ThumbsUp
+              size={12}
+              className={`transition-transform group-hover/thumb:scale-110 active:scale-95 ${thumbsUpCount > 0 ? 'fill-blue-500' : ''}`}
+            />
+            {thumbsUpCount > 0 && (
+              <span className="text-[10px] font-mono font-bold leading-none">
+                {thumbsUpCount}
+              </span>
+            )}
+          </button>
+        </div>
 
         {/* Previous, Play/Pause toggle, Next */}
         <div className="flex items-center gap-2">

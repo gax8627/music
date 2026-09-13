@@ -12,6 +12,7 @@ import { buildShareUrl, decodeShareToken } from './lib/shareToken';
 
 const STORAGE_KEY = 'rg_music_real_play_counts';
 const LAST_LOADED_KEY = 'rg_music_last_loaded_song_id';
+const THUMBS_KEY = 'rg_music_thumbs_up';
 
 // Helper to pick a random track on page load that is DIFFERENT from the previous visit.
 // Note: token-based share links (?s=...) are resolved asynchronously in a useEffect below.
@@ -72,6 +73,24 @@ export default function App() {
     return false;
   });
   const [copiedToast, setCopiedToast] = useState(false);
+
+  // Thumbs-up counts — persisted to localStorage, shared across Card and SongList
+  const [thumbsUpCounts, setThumbsUpCounts] = useState<Record<string, number>>(() => {
+    try {
+      const saved = localStorage.getItem(THUMBS_KEY);
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  const handleThumbsUp = useCallback((songId: string) => {
+    setThumbsUpCounts((prev) => {
+      const next = { ...prev, [songId]: (prev[songId] ?? 0) + 1 };
+      try { localStorage.setItem(THUMBS_KEY, JSON.stringify(next)); } catch {}
+      return next;
+    });
+  }, []);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   // Holds the current blob: URL so we can revoke it when switching tracks
@@ -502,6 +521,8 @@ export default function App() {
               onNext={() => handleNext(true)}
               onPrev={handlePrev}
               onShare={handleShare}
+              thumbsUpCounts={thumbsUpCounts}
+              onThumbsUp={handleThumbsUp}
             />
           </section>
 
@@ -526,6 +547,8 @@ export default function App() {
               isLoopForever={isLoopForever}
               onToggleLoopForever={() => setIsLoopForever((prev) => !prev)}
               onShare={handleShare}
+              thumbsUpCounts={thumbsUpCounts}
+              onThumbsUp={handleThumbsUp}
             />
           </section>
         </main>

@@ -22,6 +22,8 @@ export interface DeckPlayerProps {
   onNext?: () => void;
   onPrev?: () => void;
   onShare?: (songId: string) => void;
+  thumbsUpCounts?: Record<string, number>;
+  onThumbsUp?: (songId: string) => void;
 }
 
 // Calculate shortest signed circular offset in an infinite ring (no beginning, no end)
@@ -48,6 +50,8 @@ export default function DeckPlayer({
   onNext,
   onPrev,
   onShare,
+  thumbsUpCounts = {},
+  onThumbsUp,
 }: DeckPlayerProps) {
   const [internalIndex, setInternalIndex] = useState(currentIndex);
   const [internalPlaying, setInternalPlaying] = useState(isPlaying);
@@ -463,6 +467,8 @@ export default function DeckPlayer({
                 onNext={handleNextTrack}
                 onPrev={handlePrevTrack}
                 onShare={onShare}
+                thumbsUpCount={thumbsUpCounts[song.id] ?? 0}
+                onThumbsUp={onThumbsUp}
               />
             </motion.div>
           );
