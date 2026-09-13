@@ -10,67 +10,16 @@ export interface AudioVisualizerProps {
 
 export default function AudioVisualizer({
   isPlaying,
-  audioRef,
   trackTitle = '',
   className = '',
 }: AudioVisualizerProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const animFrameIdRef = useRef<number | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const audioCtxRef = useRef<AudioContext | null>(null);
-  const sourceNodeRef = useRef<MediaElementAudioSourceNode | null>(null);
-  const dataArrayRef = useRef<Uint8Array | null>(null);
 
-  // Cleanup AudioContext and animation frame on unmount
-  useEffect(() => {
-    return () => {
-      if (animFrameIdRef.current) {
-        cancelAnimationFrame(animFrameIdRef.current);
-      }
-      if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
-        audioCtxRef.current.close().catch(() => {});
-      }
-    };
-  }, []);
-
-  // Attempt Web Audio API connection on user play
-  useEffect(() => {
-    if (!isPlaying) {
-      if (audioCtxRef.current && audioCtxRef.current.state === 'running') {
-        audioCtxRef.current.suspend().catch(() => {});
-      }
-      return;
-    }
-
-    const audioEl = audioRef?.current;
-    if (audioEl && !sourceNodeRef.current) {
-      try {
-        const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-        if (AudioCtx) {
-          const ctx = new AudioCtx();
-          const analyser = ctx.createAnalyser();
-          analyser.fftSize = 128;
-          analyser.smoothingTimeConstant = 0.8;
-
-          const source = ctx.createMediaElementSource(audioEl);
-          source.connect(analyser);
-          analyser.connect(ctx.destination);
-
-          analyserRef.current = analyser;
-          audioCtxRef.current = ctx;
-          sourceNodeRef.current = source;
-        }
-      } catch {
-        // Fallback to harmonic simulation if element already connected or restricted
-      }
-    }
-
-    if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
-      audioCtxRef.current.resume().catch(() => {});
-    }
-  }, [isPlaying, audioRef]);
-
-  // Visualizer render loop
+  // Visualizer render loop using harmonic frequency simulation
+  // This completely decouples the visualizer from AudioContext / createMediaElementSource,
+  // ensuring the HTML5 <audio> element remains on iOS's native hardware AVFoundation pipeline
+  // so playback never stops when the iPhone screen is locked.
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -88,16 +37,6 @@ export default function AudioVisualizer({
       const width = canvas.width;
       const height = canvas.height;
       ctx.clearRect(0, 0, width, height);
-
-      let dataArray = dataArrayRef.current;
-      if (analyserRef.current && isPlaying) {
-        const binCount = analyserRef.current.frequencyBinCount;
-        if (!dataArray || dataArray.length !== binCount) {
-          dataArray = new Uint8Array(new ArrayBuffer(binCount));
-          dataArrayRef.current = dataArray;
-        }
-        analyserRef.current.getByteFrequencyData(dataArray as Uint8Array<ArrayBuffer>);
-      }
 
       phase += isPlaying ? 0.08 : 0.01;
 
@@ -121,23 +60,15 @@ export default function AudioVisualizer({
       grad.addColorStop(0.85, 'rgba(167, 139, 250, 0.95)'); // Purple
       grad.addColorStop(1, 'rgba(244, 114, 182, 1)'); // Pink peak
 
-      const hasEnergy = dataArray ? dataArray.some((v) => v > 0) : false;
-
       for (let i = 0; i < barCount; i++) {
         let targetHeight = 0.08;
 
         if (isPlaying) {
-          if (hasEnergy && dataArray) {
-            const dataIndex = Math.floor((i / barCount) * (dataArray.length * 0.75));
-            const rawVal = dataArray[dataIndex] / 255;
-            targetHeight = Math.max(0.1, rawVal);
-          } else {
-            // Harmonic wave simulation fallback
-            const wave1 = Math.sin(phase + i * 0.28) * 0.35 + 0.45;
-            const wave2 = Math.cos(phase * 1.5 + i * 0.45) * 0.25;
-            const wave3 = Math.sin(phase * 0.6 + i * 0.12) * 0.2;
-            targetHeight = Math.max(0.12, Math.min(0.96, wave1 + wave2 + wave3));
-          }
+          // Pure harmonic wave spectrum simulation
+          const wave1 = Math.sin(phase + i * 0.28) * 0.35 + 0.45;
+          const wave2 = Math.cos(phase * 1.5 + i * 0.45) * 0.25;
+          const wave3 = Math.sin(phase * 0.6 + i * 0.12) * 0.2;
+          targetHeight = Math.max(0.12, Math.min(0.96, wave1 + wave2 + wave3));
         }
 
         // Smooth interpolation

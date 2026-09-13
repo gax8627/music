@@ -187,8 +187,8 @@ export default function SongList({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search 33 tracks..."
-              aria-label="Search 33 tracks"
+              placeholder={`Search ${songs.length} tracks...`}
+              aria-label={`Search ${songs.length} tracks`}
               className="w-full bg-white/10 text-white placeholder-white/40 text-xs rounded-xl pl-8 pr-3 py-2 border border-white/10 focus:outline-none focus:border-blue-400 focus:bg-white/15 transition-all"
             />
           </div>

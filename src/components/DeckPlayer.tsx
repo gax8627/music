@@ -279,6 +279,7 @@ export default function DeckPlayer({
         <audio
           ref={internalAudioRef}
           preload="metadata"
+          playsInline
           onEnded={handleNextTrack}
           onPlay={() => setInternalPlaying(true)}
           onPause={() => setInternalPlaying(false)}

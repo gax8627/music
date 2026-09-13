@@ -195,6 +195,7 @@ export const BoomerangVideoBg: React.FC<BoomerangVideoBgProps> = ({
 
     // Kick off slow-motion playback & capture
     video.muted = true;
+    video.defaultMuted = true;
     video.playbackRate = 0.5; // Way slower, cinematic ambient motion
     if (video.readyState >= 2 && !video.paused) {
       startCapture();

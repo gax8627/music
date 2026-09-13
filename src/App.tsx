@@ -142,7 +142,6 @@ export default function App() {
       const needsUpdate = !audio.src.endsWith(target.src);
       if (needsUpdate) {
         audio.src = target.src;
-        audio.load();
       }
 
       if (shouldPlay) {
@@ -180,7 +179,6 @@ export default function App() {
 
     if (!audio.src.endsWith(currentTrack.src)) {
       audio.src = currentTrack.src;
-      audio.load();
     }
 
     const attemptPlay = () => {
@@ -335,9 +333,9 @@ export default function App() {
         album: currentTrack.album || 'RG Music Studio Archives',
         artwork: [
           {
-            src: `${window.location.origin}/favicon.svg`,
+            src: `${window.location.origin}/artwork-512.png`,
             sizes: '512x512',
-            type: 'image/svg+xml',
+            type: 'image/png',
           },
         ],
       });
@@ -361,6 +359,18 @@ export default function App() {
       navigator.mediaSession.setActionHandler('seekto', (details) => {
         if (details.seekTime !== undefined && audio && !isNaN(details.seekTime)) {
           audio.currentTime = details.seekTime;
+        }
+      });
+
+      navigator.mediaSession.setActionHandler('seekbackward', (details) => {
+        if (audio) {
+          audio.currentTime = Math.max(0, audio.currentTime - (details.seekOffset || 10));
+        }
+      });
+
+      navigator.mediaSession.setActionHandler('seekforward', (details) => {
+        if (audio) {
+          audio.currentTime = Math.min(audio.duration || 0, audio.currentTime + (details.seekOffset || 10));
         }
       });
     } catch (e) {
@@ -387,13 +397,14 @@ export default function App() {
         'setPositionState' in navigator.mediaSession &&
         audio.duration &&
         !isNaN(audio.duration) &&
-        isFinite(audio.duration)
+        isFinite(audio.duration) &&
+        audio.duration > 0
       ) {
         try {
           navigator.mediaSession.setPositionState({
             duration: audio.duration,
             playbackRate: audio.playbackRate || 1,
-            position: Math.min(audio.currentTime, audio.duration),
+            position: Math.min(Math.max(0, audio.currentTime), audio.duration),
           });
         } catch {}
       }
@@ -407,14 +418,17 @@ export default function App() {
     };
   }, []);
 
-  // Preload next upcoming track so iOS Safari has bytes buffered ahead of time
+  // Preload next upcoming track so iOS Safari has bytes buffered in cache ahead of time
   useEffect(() => {
     const nextIdx = (currentIndex + 1) % tracks.length;
     const nextTrack = tracks[nextIdx];
     if (nextTrack?.src) {
+      // Warm up Safari network cache without interrupting current audio
+      if (typeof fetch !== 'undefined') {
+        fetch(nextTrack.src, { mode: 'no-cors' }).catch(() => {});
+      }
       const preloadLink = document.createElement('link');
       preloadLink.rel = 'prefetch';
-      preloadLink.as = 'fetch';
       preloadLink.href = nextTrack.src;
       document.head.appendChild(preloadLink);
       return () => {
