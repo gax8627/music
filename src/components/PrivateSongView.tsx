@@ -126,14 +126,15 @@ export const PrivateSongView: React.FC<PrivateSongViewProps> = ({
         <button
           type="button"
           onClick={onExitPrivateView}
-          className="liquid-glass rounded-xl px-3.5 py-2 text-xs font-medium text-white/90 hover:text-white flex items-center gap-2 hover:bg-white/15 transition-all cursor-pointer group shadow-lg"
+          className="liquid-glass rounded-xl px-3 sm:px-3.5 py-1.5 sm:py-2 text-xs font-medium text-white/90 hover:text-white flex items-center gap-1.5 sm:gap-2 hover:bg-white/15 transition-all cursor-pointer group shadow-lg"
         >
-          <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
-          <span>Explore All {TOTAL_SONGS} Songs ({TOTAL_DURATION_LABEL})</span>
+          <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform shrink-0" />
+          <span className="hidden sm:inline">Explore All {TOTAL_SONGS} Songs ({TOTAL_DURATION_LABEL})</span>
+          <span className="sm:hidden">All {TOTAL_SONGS} Songs</span>
         </button>
 
         {/* Center: Private Access Badge */}
-        <div className="hidden sm:flex items-center gap-2 liquid-glass rounded-full px-4 py-1 text-xs text-white/80">
+        <div className="hidden md:flex items-center gap-2 liquid-glass rounded-full px-4 py-1 text-xs text-white/80">
           <Lock size={12} className="text-blue-400" />
           <span className="font-mono text-[11px] tracking-wide uppercase">
             Private VIP Audition · Track #{song.id}
@@ -144,7 +145,7 @@ export const PrivateSongView: React.FC<PrivateSongViewProps> = ({
         <button
           type="button"
           onClick={handleShareClick}
-          className={`rounded-xl px-4 py-2 text-xs font-semibold flex items-center gap-2 transition-all cursor-pointer shadow-lg ${
+          className={`rounded-xl px-3 sm:px-4 py-1.5 sm:py-2 text-xs font-semibold flex items-center gap-1.5 sm:gap-2 transition-all cursor-pointer shadow-lg shrink-0 ${
             isCopied || copiedToast
               ? 'bg-emerald-600 text-white ring-2 ring-emerald-400 shadow-emerald-500/30 scale-105'
               : 'bg-white text-zinc-900 hover:bg-zinc-100 hover:scale-105 active:scale-95'
@@ -158,14 +159,15 @@ export const PrivateSongView: React.FC<PrivateSongViewProps> = ({
           ) : (
             <>
               <PremiumShareIcon size={14} />
-              <span>Share Song</span>
+              <span className="hidden sm:inline">Share Song</span>
+              <span className="sm:hidden">Share</span>
             </>
           )}
         </button>
       </div>
 
       {/* Main Private Showcase Card */}
-      <div className="w-full liquid-glass rounded-[32px] p-6 sm:p-10 shadow-2xl flex flex-col items-center gap-6 border border-white/20 relative overflow-hidden">
+      <div className="w-full liquid-glass rounded-2xl sm:rounded-[32px] p-4 sm:p-8 md:p-10 shadow-2xl flex flex-col items-center gap-5 sm:gap-6 border border-white/20 relative overflow-hidden">
         {/* Ambient background glow matching song gradient */}
         <div
           className="absolute inset-0 opacity-20 pointer-events-none blur-3xl -z-10"
@@ -175,14 +177,14 @@ export const PrivateSongView: React.FC<PrivateSongViewProps> = ({
         />
 
         {/* Center Section: Album Jacket + Sliding 33 RPM Vinyl */}
-        <div className="relative flex items-center justify-center my-2">
-          <div className="relative w-44 h-44 sm:w-56 sm:h-56 md:w-64 md:h-64 flex items-center justify-center">
+        <div className="relative flex items-center justify-center my-1 sm:my-2">
+          <div className="relative w-40 h-40 sm:w-56 sm:h-56 md:w-64 md:h-64 flex items-center justify-center">
             {/* Sliding Spinning Vinyl Record */}
             <motion.div
-              className="absolute top-0 right-0 w-44 h-44 sm:w-56 sm:h-56 md:w-64 md:h-64 rounded-full bg-zinc-950 shadow-2xl flex items-center justify-center pointer-events-none"
+              className="absolute top-0 right-0 w-40 h-40 sm:w-56 sm:h-56 md:w-64 md:h-64 rounded-full bg-zinc-950 shadow-2xl flex items-center justify-center pointer-events-none"
               initial={false}
               animate={{
-                x: isPlaying ? 50 : 0,
+                x: isPlaying ? 36 : 0,
                 opacity: isPlaying ? 1 : 0.3,
               }}
               transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}

@@ -55,6 +55,9 @@ export default function DeckPlayer({
   const [isMobile, setIsMobile] = useState(() =>
     typeof window !== 'undefined' ? window.innerWidth < 640 : false
   );
+  const [isSmallScreen, setIsSmallScreen] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 380 : false
+  );
 
   const activeIndex = onSelectSong !== undefined ? currentIndex : internalIndex;
   const activePlaying = onSelectSong !== undefined ? isPlaying : internalPlaying;
@@ -66,6 +69,7 @@ export default function DeckPlayer({
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 640);
+      setIsSmallScreen(window.innerWidth < 380);
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -315,9 +319,9 @@ export default function DeckPlayer({
         type="button"
         onClick={handlePrevTrack}
         aria-label="Previous track"
-        className="!absolute left-2 sm:left-6 md:left-10 top-1/2 -translate-y-1/2 z-40 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/40 hover:bg-black/70 backdrop-blur-lg border border-white/20 text-white flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 shadow-2xl cursor-pointer"
+        className="!absolute left-1 sm:left-6 md:left-10 top-1/2 -translate-y-1/2 z-40 w-9 h-9 sm:w-11 sm:h-11 md:w-12 md:h-12 rounded-full bg-black/50 hover:bg-black/80 backdrop-blur-lg border border-white/20 text-white flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 shadow-2xl cursor-pointer"
       >
-        <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
+        <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
       </button>
 
       {/* Right Chevron Button */}
@@ -325,9 +329,9 @@ export default function DeckPlayer({
         type="button"
         onClick={handleNextTrack}
         aria-label="Next track"
-        className="!absolute right-2 sm:right-6 md:right-10 top-1/2 -translate-y-1/2 z-40 w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-black/40 hover:bg-black/70 backdrop-blur-lg border border-white/20 text-white flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 shadow-2xl cursor-pointer"
+        className="!absolute right-1 sm:right-6 md:right-10 top-1/2 -translate-y-1/2 z-40 w-9 h-9 sm:w-11 sm:h-11 md:w-12 md:h-12 rounded-full bg-black/50 hover:bg-black/80 backdrop-blur-lg border border-white/20 text-white flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 shadow-2xl cursor-pointer"
       >
-        <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
+        <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
       </button>
 
       {/* Endless 3D Circular Cylinder Carousel Stage with Full Touch & Mouse Drag */}
@@ -340,7 +344,7 @@ export default function DeckPlayer({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
-        className="relative w-full h-[415px] sm:h-[455px] flex items-center justify-center overflow-visible select-none cursor-grab active:cursor-grabbing touch-pan-y"
+        className="relative w-full h-[400px] sm:h-[455px] flex items-center justify-center overflow-visible select-none cursor-grab active:cursor-grabbing touch-pan-y"
         style={{
           perspective: 1200,
           perspectiveOrigin: 'center center',
@@ -359,15 +363,15 @@ export default function DeckPlayer({
           const isCardPlaying = isActive && activePlaying;
 
           // 3D Circular Cylindrical Transformation
-          const spacing = isMobile ? 190 : 275;
+          const spacing = isSmallScreen ? 165 : isMobile ? 185 : 275;
           const baseX = diff * spacing;
           const x = baseX + liveDrag * Math.max(0.2, 1 - absDiff * 0.22);
 
           const scale =
             diff === 0
               ? isCardPlaying
-                ? 1.08
-                : 1.02
+                ? isMobile ? 1.03 : 1.07
+                : 1.0
               : isMobile
               ? Math.max(0.62, 0.84 - (absDiff - 1) * 0.18)
               : Math.max(0.55, 0.88 - (absDiff - 1) * 0.14);
@@ -400,6 +404,9 @@ export default function DeckPlayer({
 
           const zIndex = 30 - absDiff * 7;
 
+          const cardHalfW = isMobile ? 135 : 167;
+          const cardHalfH = isMobile ? 188 : 207;
+
           return (
             <motion.div
               key={song.id}
@@ -407,8 +414,8 @@ export default function DeckPlayer({
                 position: 'absolute',
                 left: '50%',
                 top: '50%',
-                marginLeft: isMobile ? -140 : -167,
-                marginTop: isMobile ? -192 : -207,
+                marginLeft: -cardHalfW,
+                marginTop: -cardHalfH,
                 zIndex,
                 transformStyle: 'preserve-3d',
               }}

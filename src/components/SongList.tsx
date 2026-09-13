@@ -82,9 +82,9 @@ export default function SongList({
             <Calendar size={18} />
           </div>
           <div>
-            <h3 className="text-base sm:text-lg font-bold text-white tracking-tight flex items-center gap-2">
-              All Recordings by Creation Date
-              <span className="text-xs font-normal text-white/80 bg-white/15 px-2.5 py-0.5 rounded-full border border-white/10 font-mono">
+            <h3 className="text-sm sm:text-base md:text-lg font-bold text-white tracking-tight flex items-center flex-wrap gap-1.5 sm:gap-2">
+              <span>All Recordings</span>
+              <span className="text-[11px] sm:text-xs font-normal text-white/80 bg-white/15 px-2 sm:px-2.5 py-0.5 rounded-full border border-white/10 font-mono">
                 {songs.length} tracks · {totalDurationLabel}
               </span>
             </h3>
@@ -248,15 +248,16 @@ export default function SongList({
                 </div>
 
                 {/* Right side: Real Play Count, Duration & Like */}
-                <div className="flex items-center gap-3 sm:gap-6 shrink-0">
+                <div className="flex items-center gap-2 sm:gap-5 shrink-0">
                   {/* Real Play Count */}
-                  <div className="flex items-center gap-1.5 text-xs font-mono text-white/70">
-                    <Headphones size={13} className="text-blue-400" />
-                    <span>{playLabel}</span>
+                  <div className="flex items-center gap-1 text-[11px] sm:text-xs font-mono text-white/70">
+                    <Headphones size={12} className="text-blue-400 shrink-0" />
+                    <span className="hidden sm:inline">{playLabel}</span>
+                    <span className="sm:hidden">{playCount}</span>
                   </div>
 
                   {/* Duration */}
-                  <span className="text-xs font-mono text-white/60 w-12 text-right">
+                  <span className="text-[11px] sm:text-xs font-mono text-white/60 w-10 sm:w-12 text-right">
                     {song.durationFormatted || '02:54'}
                   </span>
 
@@ -270,9 +271,9 @@ export default function SongList({
                       }}
                       aria-label="Share song"
                       title="Share private link"
-                      className="p-1.5 text-white/40 hover:text-blue-400 transition-colors cursor-pointer"
+                      className="p-1 sm:p-1.5 text-white/40 hover:text-blue-400 transition-colors cursor-pointer"
                     >
-                      <PremiumShareIcon size={14} />
+                      <PremiumShareIcon size={13} />
                     </button>
                   )}
 
@@ -281,13 +282,11 @@ export default function SongList({
                     type="button"
                     onClick={(e) => toggleLike(song.id, e)}
                     aria-label="Favorite song"
-                    className="p-1.5 text-white/40 hover:text-white transition-colors cursor-pointer"
+                    className="p-1 sm:p-1.5 text-white/40 hover:text-white transition-colors cursor-pointer"
                   >
                     <Heart
-                      size={15}
-                      className={`transition-colors ${
-                        isLiked ? 'fill-rose-500 text-rose-500' : ''
-                      }`}
+                      size={13}
+                      className={isLiked ? 'fill-red-500 text-red-500' : ''}
                     />
                   </button>
                 </div>

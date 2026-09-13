@@ -215,12 +215,12 @@ export default function AudioVisualizer({
       {/* Frequency scale markers */}
       <div className="flex justify-between items-center text-[9px] font-mono text-white/40 pt-0.5 px-1">
         <span>20 Hz</span>
-        <span>80 Hz</span>
+        <span className="hidden sm:inline">80 Hz</span>
         <span>250 Hz</span>
         <span>1 kHz</span>
-        <span>4 kHz</span>
+        <span className="hidden sm:inline">4 kHz</span>
         <span>8 kHz</span>
-        <span>16 kHz</span>
+        <span className="hidden sm:inline">16 kHz</span>
         <span>24 kHz</span>
       </div>
     </div>

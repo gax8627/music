@@ -57,9 +57,9 @@ export default function Card({
       onClick={() => {
         onTogglePlay();
       }}
-      className={`relative w-[280px] sm:w-[320px] md:w-[335px] h-[385px] sm:h-[415px] flex-shrink-0 bg-white/95 rounded-[32px] sm:rounded-[36px] overflow-hidden flex flex-col justify-between p-5 sm:p-6 border border-white/80 transition-all duration-300 select-none cursor-pointer ${
+      className={`relative w-[270px] sm:w-[320px] md:w-[335px] h-[375px] sm:h-[415px] flex-shrink-0 bg-white/95 rounded-[28px] sm:rounded-[36px] overflow-hidden flex flex-col justify-between p-4 sm:p-6 border border-white/80 transition-all duration-300 select-none cursor-pointer ${
         isExpanded
-          ? 'scale-105 sm:scale-[1.08] ring-2 ring-blue-600/80 shadow-[0_25px_60px_-10px_rgba(29,78,216,0.35)] z-20 opacity-100'
+          ? 'scale-[1.03] sm:scale-[1.08] ring-2 ring-blue-600/80 shadow-[0_25px_60px_-10px_rgba(29,78,216,0.35)] z-20 opacity-100'
           : 'scale-95 sm:scale-100 opacity-80 hover:opacity-100 shadow-[0_10px_30px_rgba(0,0,0,0.1)] ring-1 ring-black/5 z-10'
       } ${
         isBackground ? 'brightness-95' : ''
