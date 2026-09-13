@@ -295,19 +295,24 @@ export default function App() {
     }
   }, [isShuffle, currentIndex, tracks.length, isPlaying, selectSong]);
 
-  // Shuffle mode: automatically picks a random track and starts playback immediately
+  // Shuffle mode toggle: toggle between ON and OFF
   const handleToggleShuffle = useCallback(() => {
-    const availableIndices = tracks
-      .map((_, i) => i)
-      .filter((i) => i !== currentIndex);
-    const chosen =
-      availableIndices[Math.floor(Math.random() * availableIndices.length)] ?? 0;
-    playedInShuffleRef.current.clear();
-    playedInShuffleRef.current.add(chosen);
-    historyRef.current = [currentIndex, chosen];
-
-    setIsShuffle(true);
-    selectSong(chosen, true);
+    setIsShuffle((prev) => {
+      const next = !prev;
+      if (next) {
+        // If turning shuffle ON, pick a random track and start playing
+        const availableIndices = tracks
+          .map((_, i) => i)
+          .filter((i) => i !== currentIndex);
+        const chosen =
+          availableIndices[Math.floor(Math.random() * availableIndices.length)] ?? 0;
+        playedInShuffleRef.current.clear();
+        playedInShuffleRef.current.add(chosen);
+        historyRef.current = [currentIndex, chosen];
+        selectSong(chosen, true);
+      }
+      return next;
+    });
   }, [tracks, currentIndex, selectSong]);
 
   // Global keyboard shortcuts (Left/Right arrows, Space)

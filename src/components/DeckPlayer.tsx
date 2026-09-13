@@ -291,30 +291,46 @@ export default function DeckPlayer({
         <button
           type="button"
           onClick={onToggleShuffle}
-          title={isShuffle ? 'Shuffle Active (Plays automatically)' : 'Shuffle Music'}
-          aria-label="Toggle shuffle"
-          className={`rounded-full p-2.5 transition-all cursor-pointer ${
+          title={isShuffle ? 'Shuffle is ON (Click to turn off)' : 'Shuffle is OFF (Click to turn on)'}
+          aria-label={isShuffle ? 'Shuffle is ON' : 'Shuffle is OFF'}
+          className={`relative flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-all cursor-pointer ${
             isShuffle
               ? 'bg-white text-zinc-950 shadow-[0_0_20px_rgba(255,255,255,0.45)] ring-1 ring-white scale-105'
-              : 'text-white/60 hover:text-white hover:bg-white/10 active:scale-95'
+              : 'bg-white/5 text-white/40 ring-1 ring-white/15 hover:text-white/70 hover:bg-white/10 active:scale-95'
           }`}
         >
-          <PremiumShuffleIcon size={16} className={isShuffle ? 'animate-pulse' : ''} />
+          <PremiumShuffleIcon size={15} className={isShuffle ? 'animate-pulse' : 'opacity-40'} />
+          <span className={`text-[9px] font-bold font-mono tracking-wider leading-none ${isShuffle ? 'text-zinc-900' : 'text-white/40'}`}>
+            {isShuffle ? 'ON' : 'OFF'}
+          </span>
+          <span
+            className={`w-1.5 h-1.5 rounded-full transition-all ${
+              isShuffle ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-white/20'
+            }`}
+          />
         </button>
 
         {/* Loop Forever Toggle */}
         <button
           type="button"
           onClick={onToggleLoopForever}
-          title={isLoopForever ? `Loop Active (All ${songs.length} Songs)` : 'Loop Off'}
-          aria-label="Toggle loop forever"
-          className={`rounded-full p-2.5 transition-all cursor-pointer ${
+          title={isLoopForever ? `Loop is ON (All ${songs.length} Songs)` : 'Loop is OFF'}
+          aria-label={isLoopForever ? 'Loop is ON' : 'Loop is OFF'}
+          className={`relative flex items-center gap-1.5 rounded-full px-3 py-1.5 transition-all cursor-pointer ${
             isLoopForever
               ? 'bg-white text-zinc-950 shadow-[0_0_20px_rgba(255,255,255,0.45)] ring-1 ring-white scale-105'
-              : 'text-white/60 hover:text-white hover:bg-white/10 active:scale-95'
+              : 'bg-white/5 text-white/40 ring-1 ring-white/15 hover:text-white/70 hover:bg-white/10 active:scale-95'
           }`}
         >
-          <PremiumLoopIcon size={16} />
+          <PremiumLoopIcon size={15} className={isLoopForever ? '' : 'opacity-40'} />
+          <span className={`text-[9px] font-bold font-mono tracking-wider leading-none ${isLoopForever ? 'text-zinc-900' : 'text-white/40'}`}>
+            {isLoopForever ? 'ON' : 'OFF'}
+          </span>
+          <span
+            className={`w-1.5 h-1.5 rounded-full transition-all ${
+              isLoopForever ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-white/20'
+            }`}
+          />
         </button>
       </div>
 

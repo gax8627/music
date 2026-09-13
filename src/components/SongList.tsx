@@ -115,34 +115,50 @@ export default function SongList({
 
         {/* Controls: Shuffle, Loop, Sort Toggle + Search */}
         <div className="flex items-center flex-wrap gap-2 w-full sm:w-auto justify-start sm:justify-end">
-          {/* Shuffle Mode Toggle (Luxury Monochrome Icon) */}
+          {/* Shuffle Mode Toggle */}
           <button
             type="button"
             onClick={onToggleShuffle}
-            aria-label="Toggle shuffle"
-            className={`rounded-xl p-2.5 transition-all cursor-pointer shrink-0 ${
+            aria-label={isShuffle ? 'Shuffle is ON' : 'Shuffle is OFF'}
+            className={`rounded-xl px-2.5 py-1.5 flex items-center gap-1.5 transition-all cursor-pointer shrink-0 ${
               isShuffle
                 ? 'bg-white text-zinc-950 shadow-[0_0_16px_rgba(255,255,255,0.4)] ring-1 ring-white scale-105'
-                : 'liquid-glass text-white/60 hover:text-white hover:bg-white/15 active:scale-95'
+                : 'liquid-glass text-white/40 hover:text-white hover:bg-white/15 active:scale-95'
             }`}
-            title={isShuffle ? 'Shuffle Active (Plays automatically)' : 'Shuffle music'}
+            title={isShuffle ? 'Shuffle is ON (Click to turn off)' : 'Shuffle is OFF (Click to turn on)'}
           >
-            <PremiumShuffleIcon size={14} className={isShuffle ? 'animate-pulse' : ''} />
+            <PremiumShuffleIcon size={14} className={isShuffle ? 'animate-pulse' : 'opacity-40'} />
+            <span className={`text-[9px] font-bold font-mono tracking-wider leading-none ${isShuffle ? 'text-zinc-900' : 'text-white/40'}`}>
+              {isShuffle ? 'ON' : 'OFF'}
+            </span>
+            <span
+              className={`w-1.5 h-1.5 rounded-full transition-all ${
+                isShuffle ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-white/20'
+              }`}
+            />
           </button>
 
-          {/* Loop Forever Toggle (Luxury Monochrome Icon) */}
+          {/* Loop Forever Toggle */}
           <button
             type="button"
             onClick={onToggleLoopForever}
-            aria-label="Toggle loop all"
-            className={`rounded-xl p-2.5 transition-all cursor-pointer shrink-0 ${
+            aria-label={isLoopForever ? 'Loop is ON' : 'Loop is OFF'}
+            className={`rounded-xl px-2.5 py-1.5 flex items-center gap-1.5 transition-all cursor-pointer shrink-0 ${
               isLoopForever
                 ? 'bg-white text-zinc-950 shadow-[0_0_16px_rgba(255,255,255,0.4)] ring-1 ring-white scale-105'
-                : 'liquid-glass text-white/60 hover:text-white hover:bg-white/15 active:scale-95'
+                : 'liquid-glass text-white/40 hover:text-white hover:bg-white/15 active:scale-95'
             }`}
-            title={isLoopForever ? 'Loop Active (All 32 Songs)' : 'Toggle continuous loop'}
+            title={isLoopForever ? `Loop is ON (All ${songs.length} Songs)` : 'Loop is OFF'}
           >
-            <PremiumLoopIcon size={14} />
+            <PremiumLoopIcon size={14} className={isLoopForever ? '' : 'opacity-40'} />
+            <span className={`text-[9px] font-bold font-mono tracking-wider leading-none ${isLoopForever ? 'text-zinc-900' : 'text-white/40'}`}>
+              {isLoopForever ? 'ON' : 'OFF'}
+            </span>
+            <span
+              className={`w-1.5 h-1.5 rounded-full transition-all ${
+                isLoopForever ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-white/20'
+              }`}
+            />
           </button>
 
           {/* Sort order toggle — cycles: Oldest → Newest → Most Played */}
