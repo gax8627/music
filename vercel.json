@@ -17,7 +17,8 @@
       "source": "/audio/(.*)",
       "headers": [
         { "key": "X-Robots-Tag", "value": "noindex, nofollow, nosnippet, noarchive" },
-        { "key": "Cache-Control", "value": "private, no-store" }
+        { "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" },
+        { "key": "Accept-Ranges", "value": "bytes" }
       ]
     }
   ]

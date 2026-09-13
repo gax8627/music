@@ -196,7 +196,24 @@ export const BoomerangVideoBg: React.FC<BoomerangVideoBgProps> = ({
     // Kick off slow-motion playback & capture
     video.muted = true;
     video.defaultMuted = true;
+    video.volume = 0;
     video.playbackRate = 0.5; // Way slower, cinematic ambient motion
+
+    // On iOS WebKit, actively playing video elements can trigger a media session interruption
+    // when the phone locks. Pause the background video whenever the page is hidden.
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        if (!video.paused) {
+          video.pause();
+        }
+      } else {
+        if (!isCompletedRef.current && !isBoomerang && video.paused) {
+          video.play().catch(() => {});
+        }
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     if (video.readyState >= 2 && !video.paused) {
       startCapture();
     } else {
@@ -209,6 +226,7 @@ export const BoomerangVideoBg: React.FC<BoomerangVideoBgProps> = ({
       isCapturingRef.current = false;
       isCompletedRef.current = true;
 
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       video.removeEventListener('play', onPlay);
       video.removeEventListener('pause', onPauseOrWaiting);
       video.removeEventListener('waiting', onPauseOrWaiting);
@@ -228,7 +246,7 @@ export const BoomerangVideoBg: React.FC<BoomerangVideoBgProps> = ({
       }
       video.pause();
     };
-  }, [src, captureCurrentFrame, handleVideoEnded, triggerFallback]);
+  }, [src, captureCurrentFrame, handleVideoEnded, triggerFallback, isBoomerang]);
 
   // Boomerang slow-motion ping-pong playback loop (10fps for ethereal dreaminess)
   useEffect(() => {
@@ -328,6 +346,8 @@ export const BoomerangVideoBg: React.FC<BoomerangVideoBgProps> = ({
         playsInline
         autoPlay
         crossOrigin="anonymous"
+        disablePictureInPicture
+        disableRemotePlayback
         className={`w-full h-full object-cover ${isBoomerang ? 'hidden' : 'block'}`}
       />
       {isBoomerang && (

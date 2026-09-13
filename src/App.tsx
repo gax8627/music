@@ -144,6 +144,25 @@ export default function App() {
         audio.src = target.src;
       }
 
+      // Synchronously update iOS Lock Screen / Control Center info immediately
+      if (typeof window !== 'undefined' && 'mediaSession' in navigator) {
+        try {
+          navigator.mediaSession.metadata = new MediaMetadata({
+            title: target.title,
+            artist: target.artist || 'RG Music',
+            album: target.album || 'RG Music Studio Archives',
+            artwork: [
+              {
+                src: `${window.location.origin}/artwork-512.png`,
+                sizes: '512x512',
+                type: 'image/png',
+              },
+            ],
+          });
+          navigator.mediaSession.playbackState = shouldPlay ? 'playing' : 'paused';
+        } catch {}
+      }
+
       if (shouldPlay) {
         // Synchronous play call within the onended event loop allows iOS Safari
         // to maintain its background audio session when the screen is locked.

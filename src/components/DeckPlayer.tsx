@@ -93,7 +93,6 @@ export default function DeckPlayer({
         if (audio && targetSong.src) {
           if (!audio.src.endsWith(targetSong.src)) {
             audio.src = targetSong.src;
-            audio.load();
           }
           if (shouldPlay) {
             audio
