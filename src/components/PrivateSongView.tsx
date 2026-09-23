@@ -3,12 +3,9 @@ import { motion } from 'framer-motion';
 import {
   Play,
   Pause,
-  SkipBack,
-  SkipForward,
   Headphones,
   Calendar,
   Lock,
-  ArrowLeft,
   Volume2,
   VolumeX,
   Disc3,
@@ -16,21 +13,16 @@ import {
 } from 'lucide-react';
 import { Song } from './Card';
 import AudioVisualizer from './AudioVisualizer';
-import { PremiumShuffleIcon, PremiumLoopIcon, PremiumShareIcon } from './PremiumIcons';
-import { formatTime, TOTAL_SONGS, TOTAL_DURATION_LABEL } from '../data/tracks';
+import { PremiumLoopIcon, PremiumShareIcon } from './PremiumIcons';
+import { formatTime } from '../data/tracks';
 import CardVisualizerCover, { VinylCenterLabel } from './CardVisualizerCover';
 
 export interface PrivateSongViewProps {
   song: Song;
   isPlaying: boolean;
   onTogglePlay: () => void;
-  onNext?: () => void;
-  onPrev?: () => void;
-  onExitPrivateView: () => void;
   onShare: (songId: string) => void;
   audioRef?: React.RefObject<HTMLAudioElement | null>;
-  isShuffle?: boolean;
-  onToggleShuffle?: () => void;
   isLoopForever?: boolean;
   onToggleLoopForever?: () => void;
   copiedToast?: boolean;
@@ -40,13 +32,8 @@ export const PrivateSongView: React.FC<PrivateSongViewProps> = ({
   song,
   isPlaying,
   onTogglePlay,
-  onNext,
-  onPrev,
-  onExitPrivateView,
   onShare,
   audioRef,
-  isShuffle = true,
-  onToggleShuffle,
   isLoopForever = true,
   onToggleLoopForever,
   copiedToast = false,
@@ -120,24 +107,13 @@ export const PrivateSongView: React.FC<PrivateSongViewProps> = ({
 
   return (
     <div className="relative z-10 flex-1 flex flex-col items-center justify-between w-full max-w-5xl mx-auto px-4 sm:px-6 pt-24 sm:pt-28 pb-12 select-none gap-6 sm:gap-8">
-      {/* Top Private Navigation & Access Bar */}
+      {/* Top Private Navigation & Access Bar (Isolated — No Catalog Navigation) */}
       <div className="w-full flex items-center justify-between gap-3 border-b border-white/10 pb-4">
-        {/* Left: Back to Full Catalog */}
-        <button
-          type="button"
-          onClick={onExitPrivateView}
-          className="liquid-glass rounded-xl px-3 sm:px-3.5 py-1.5 sm:py-2 text-xs font-medium text-white/90 hover:text-white flex items-center gap-1.5 sm:gap-2 hover:bg-white/15 transition-all cursor-pointer group shadow-lg"
-        >
-          <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform shrink-0" />
-          <span className="hidden sm:inline">Explore All {TOTAL_SONGS} Songs ({TOTAL_DURATION_LABEL})</span>
-          <span className="sm:hidden">All {TOTAL_SONGS} Songs</span>
-        </button>
-
-        {/* Center: Private Access Badge */}
-        <div className="hidden md:flex items-center gap-2 liquid-glass rounded-full px-4 py-1 text-xs text-white/80">
-          <Lock size={12} className="text-blue-400" />
-          <span className="font-mono text-[11px] tracking-wide uppercase">
-            Private VIP Audition · Track #{song.id}
+        {/* Left: Private VIP Badge */}
+        <div className="flex items-center gap-2 liquid-glass rounded-xl px-3.5 sm:px-4 py-1.5 sm:py-2 text-xs text-white/90 shadow-lg">
+          <Lock size={13} className="text-blue-400" />
+          <span className="font-mono text-[11px] sm:text-xs tracking-wider uppercase font-semibold">
+            Private VIP Audition
           </span>
         </div>
 
@@ -273,102 +249,60 @@ export const PrivateSongView: React.FC<PrivateSongViewProps> = ({
           </div>
         </div>
 
-        {/* Master Playback Controls */}
-        <div className="flex items-center justify-between w-full max-w-xl pt-2">
-          {/* Left: Shuffle Mode Toggle */}
+        {/* Master Playback Controls (Isolated Single-Track Player — No Track Skipping) */}
+        <div className="flex items-center justify-between w-full max-w-md pt-2 px-2 sm:px-4">
+          {/* Left: Volume / Mute Toggle */}
           <button
             type="button"
-            onClick={onToggleShuffle}
-            aria-label={isShuffle ? 'Shuffle is ON' : 'Shuffle is OFF'}
-            title={isShuffle ? 'Shuffle is ON (Click to turn off)' : 'Shuffle is OFF (Click to turn on)'}
+            onClick={toggleMute}
+            aria-label={isMuted ? 'Unmute' : 'Mute'}
+            className="p-3 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-all cursor-pointer active:scale-95 flex items-center gap-1.5 text-xs font-mono"
+            title={isMuted ? 'Unmute audio' : 'Mute audio'}
+          >
+            {isMuted ? <VolumeX size={20} className="text-red-400" /> : <Volume2 size={20} />}
+            <span className="hidden sm:inline text-white/50">{isMuted ? 'Muted' : 'Sound'}</span>
+          </button>
+
+          {/* Center: Large Play/Pause */}
+          <button
+            type="button"
+            onClick={onTogglePlay}
+            aria-label={isPlaying ? 'Pause' : 'Play'}
+            className={`h-16 w-16 sm:h-18 sm:w-18 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-2xl active:scale-95 ${
+              isPlaying
+                ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-500/50 scale-105 ring-2 ring-blue-400/50'
+                : 'bg-white hover:bg-zinc-100 text-zinc-950 hover:scale-105 shadow-white/20'
+            }`}
+          >
+            {isPlaying ? (
+              <Pause size={28} fill="currentColor" />
+            ) : (
+              <Play size={28} fill="currentColor" className="ml-1" />
+            )}
+          </button>
+
+          {/* Right: Repeat Track Toggle */}
+          <button
+            type="button"
+            onClick={onToggleLoopForever}
+            aria-label={isLoopForever ? 'Repeat Track is ON' : 'Repeat Track is OFF'}
+            title={isLoopForever ? 'Repeat Track is ON (Click to turn off)' : 'Repeat Track is OFF (Click to turn on)'}
             className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all cursor-pointer ${
-              isShuffle
+              isLoopForever
                 ? 'bg-white text-zinc-950 shadow-[0_0_20px_rgba(255,255,255,0.45)] ring-1 ring-white scale-105'
                 : 'bg-white/5 text-white/40 ring-1 ring-white/15 hover:text-white/70 hover:bg-white/10'
             }`}
           >
-            <PremiumShuffleIcon size={16} className={isShuffle ? 'animate-pulse' : 'opacity-40'} />
-            <span className={`text-[9px] font-bold font-mono tracking-wider leading-none ${isShuffle ? 'text-zinc-900' : 'text-white/40'}`}>
-              {isShuffle ? 'ON' : 'OFF'}
+            <PremiumLoopIcon size={16} className={isLoopForever ? '' : 'opacity-40'} />
+            <span className={`text-[9px] font-bold font-mono tracking-wider leading-none ${isLoopForever ? 'text-zinc-900' : 'text-white/40'}`}>
+              REPEAT {isLoopForever ? 'ON' : 'OFF'}
             </span>
             <span
               className={`w-1.5 h-1.5 rounded-full transition-all ${
-                isShuffle ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-white/20'
+                isLoopForever ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-white/20'
               }`}
             />
           </button>
-
-          {/* Center: Previous, Large Play/Pause, Next */}
-          <div className="flex items-center gap-4 sm:gap-6">
-            <button
-              type="button"
-              onClick={onPrev}
-              aria-label="Previous track"
-              className="p-2.5 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-all cursor-pointer active:scale-95"
-            >
-              <SkipBack size={22} fill="currentColor" />
-            </button>
-
-            <button
-              type="button"
-              onClick={onTogglePlay}
-              aria-label={isPlaying ? 'Pause' : 'Play'}
-              className={`h-14 w-14 sm:h-16 sm:w-16 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-2xl active:scale-95 ${
-                isPlaying
-                  ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-500/50 scale-105'
-                  : 'bg-white hover:bg-zinc-100 text-zinc-950 hover:scale-105 shadow-white/20'
-              }`}
-            >
-              {isPlaying ? (
-                <Pause size={26} fill="currentColor" />
-              ) : (
-                <Play size={26} fill="currentColor" className="ml-1" />
-              )}
-            </button>
-
-            <button
-              type="button"
-              onClick={onNext}
-              aria-label="Next track"
-              className="p-2.5 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-all cursor-pointer active:scale-95"
-            >
-              <SkipForward size={22} fill="currentColor" />
-            </button>
-          </div>
-
-          {/* Right: Loop Forever Toggle & Mute */}
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={onToggleLoopForever}
-              aria-label={isLoopForever ? 'Loop is ON' : 'Loop is OFF'}
-              title={isLoopForever ? `Loop is ON (All ${TOTAL_SONGS} Songs)` : 'Loop is OFF'}
-              className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all cursor-pointer ${
-                isLoopForever
-                  ? 'bg-white text-zinc-950 shadow-[0_0_20px_rgba(255,255,255,0.45)] ring-1 ring-white scale-105'
-                  : 'bg-white/5 text-white/40 ring-1 ring-white/15 hover:text-white/70 hover:bg-white/10'
-              }`}
-            >
-              <PremiumLoopIcon size={16} className={isLoopForever ? '' : 'opacity-40'} />
-              <span className={`text-[9px] font-bold font-mono tracking-wider leading-none ${isLoopForever ? 'text-zinc-900' : 'text-white/40'}`}>
-                {isLoopForever ? 'ON' : 'OFF'}
-              </span>
-              <span
-                className={`w-1.5 h-1.5 rounded-full transition-all ${
-                  isLoopForever ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-white/20'
-                }`}
-              />
-            </button>
-
-            <button
-              type="button"
-              onClick={toggleMute}
-              aria-label={isMuted ? 'Unmute' : 'Mute'}
-              className="p-2.5 text-white/60 hover:text-white hover:bg-white/10 rounded-full transition-all cursor-pointer"
-            >
-              {isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}
-            </button>
-          </div>
         </div>
 
         {/* Dynamic Frequency Spectrum Visualizer */}

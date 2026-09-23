@@ -311,10 +311,22 @@ export default function App() {
 
       if (e.key === 'ArrowLeft') {
         e.preventDefault();
-        handlePrev();
+        if (isPrivateView) {
+          if (audioRef.current) {
+            audioRef.current.currentTime = Math.max(0, audioRef.current.currentTime - 5);
+          }
+        } else {
+          handlePrev();
+        }
       } else if (e.key === 'ArrowRight') {
         e.preventDefault();
-        handleNext();
+        if (isPrivateView) {
+          if (audioRef.current && audioRef.current.duration) {
+            audioRef.current.currentTime = Math.min(audioRef.current.duration, audioRef.current.currentTime + 5);
+          }
+        } else {
+          handleNext();
+        }
       } else if (e.key === ' ' || e.code === 'Space') {
         e.preventDefault();
         if (audioRef.current) {
@@ -336,7 +348,7 @@ export default function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleNext, handlePrev, isPlaying, currentIndex, incrementRealPlayCount]);
+  }, [handleNext, handlePrev, isPlaying, currentIndex, incrementRealPlayCount, isPrivateView]);
 
   // Media Session API: Powers iOS Lock Screen & Control Center, Apple Watch, AirPods, and Android media notification
   useEffect(() => {
@@ -368,11 +380,23 @@ export default function App() {
       });
 
       navigator.mediaSession.setActionHandler('previoustrack', () => {
-        handlePrev();
+        if (isPrivateView) {
+          if (audio) {
+            audio.currentTime = 0;
+          }
+        } else {
+          handlePrev();
+        }
       });
 
       navigator.mediaSession.setActionHandler('nexttrack', () => {
-        handleNext(true);
+        if (isPrivateView) {
+          if (audio) {
+            audio.currentTime = 0;
+          }
+        } else {
+          handleNext(true);
+        }
       });
 
       navigator.mediaSession.setActionHandler('seekto', (details) => {
@@ -552,13 +576,6 @@ export default function App() {
     }
   };
 
-  // Exit private view and return to full landing page
-  const exitPrivateView = useCallback(() => {
-    setIsPrivateView(false);
-    const cleanUrl = `${window.location.origin}${window.location.pathname}`;
-    window.history.pushState(null, '', cleanUrl);
-  }, []);
-
   return (
     <div className="relative min-h-screen w-full overflow-x-hidden bg-black select-none text-white flex flex-col justify-between">
       {/* 1. Interactive Fluid Mouse Follower & Ambient Aura */}
@@ -579,10 +596,20 @@ export default function App() {
         controlsList="nodownload nofullscreen noremoteplayback"
         onContextMenu={(e) => e.preventDefault()}
         onEnded={() => {
-          if (isLoopForever) {
-            handleNext(true);
+          if (isPrivateView) {
+            // In shared view, never advance to other songs: repeat current song or stop
+            if (isLoopForever && audioRef.current) {
+              audioRef.current.currentTime = 0;
+              audioRef.current.play().catch(() => {});
+            } else {
+              setIsPlaying(false);
+            }
           } else {
-            setIsPlaying(false);
+            if (isLoopForever) {
+              handleNext(true);
+            } else {
+              setIsPlaying(false);
+            }
           }
         }}
         onPlay={() => setIsPlaying(true)}
@@ -590,21 +617,16 @@ export default function App() {
       />
 
       {/* 3. Top Header Navigation (z-20) */}
-      <Header />
+      <Header isPrivateView={isPrivateView} />
 
-      {/* 4. Stage: Either Dedicated Private VIP Page OR Full 33-Song Main Stage */}
+      {/* 4. Stage: Either Dedicated Isolated Single-Track Private View OR Full Main Stage */}
       {isPrivateView && currentTrack ? (
         <PrivateSongView
           song={currentTrack}
           isPlaying={isPlaying}
           onTogglePlay={() => selectSong(currentIndex, !isPlaying)}
-          onNext={() => handleNext(true)}
-          onPrev={handlePrev}
-          onExitPrivateView={exitPrivateView}
           onShare={handleShare}
           audioRef={audioRef}
-          isShuffle={isShuffle}
-          onToggleShuffle={handleToggleShuffle}
           isLoopForever={isLoopForever}
           onToggleLoopForever={() => setIsLoopForever((prev) => !prev)}
           copiedToast={copiedToast}
@@ -678,7 +700,9 @@ export default function App() {
 
       {/* 5. Footer Note */}
       <footer className="relative z-10 py-4 text-center text-[11px] font-mono text-white/50 border-t border-white/10">
-        RG Music Studio Archives · {TOTAL_SONGS} Recordings · {TOTAL_DURATION_LABEL} Total Runtime · Lossless Wax Master
+        {isPrivateView
+          ? 'RG Music Studio Archives · Lossless Wax Master · Exclusive Audition'
+          : `RG Music Studio Archives · ${TOTAL_SONGS} Recordings · ${TOTAL_DURATION_LABEL} Total Runtime · Lossless Wax Master`}
       </footer>
     </div>
   );
