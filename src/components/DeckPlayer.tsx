@@ -91,7 +91,8 @@ export default function DeckPlayer({
         setInternalIndex(index);
         const audio = effectiveAudioRef.current;
         if (audio && targetSong.src) {
-          if (!audio.src.endsWith(targetSong.src)) {
+          const dpath = (() => { try { return new URL(audio.src).pathname; } catch { return audio.src; } })();
+          if (dpath !== targetSong.src) {
             audio.src = targetSong.src;
           }
           if (shouldPlay) {

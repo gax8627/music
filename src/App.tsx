@@ -139,8 +139,10 @@ export default function App() {
       const audio = audioRef.current;
       if (!audio || !target.src) return;
 
-      const needsUpdate = !audio.src.endsWith(target.src);
-      if (needsUpdate) {
+      // Compare by URL pathname to avoid any endsWith false matches.
+      // audio.src is always absolute (browser-resolved); target.src is root-relative.
+      const currentPath = (() => { try { return new URL(audio.src).pathname; } catch { return audio.src; } })();
+      if (currentPath !== target.src) {
         audio.src = target.src;
       }
 
@@ -196,7 +198,8 @@ export default function App() {
     const audio = audioRef.current;
     if (!audio || !currentTrack?.src) return;
 
-    if (!audio.src.endsWith(currentTrack.src)) {
+    const initPath = (() => { try { return new URL(audio.src).pathname; } catch { return audio.src; } })();
+    if (initPath !== currentTrack.src) {
       audio.src = currentTrack.src;
     }
 
@@ -662,7 +665,7 @@ export default function App() {
             />
           </section>
 
-          {/* Chronological List of All 33 Songs */}
+          {/* Chronological List of All 31 Songs */}
           <section className="w-full">
             <SongList
               songs={tracks}
