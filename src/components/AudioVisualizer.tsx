@@ -30,10 +30,10 @@ export default function AudioVisualizer({
     const simBars = Array.from({ length: barCount }, () => 0.08);
 
     let phase = 0;
+    let settlingFrames = 0;
+    const maxSettlingFrames = 40;
 
     const render = () => {
-      animFrameIdRef.current = requestAnimationFrame(render);
-
       const width = canvas.width;
       const height = canvas.height;
       ctx.clearRect(0, 0, width, height);
@@ -60,6 +60,8 @@ export default function AudioVisualizer({
       grad.addColorStop(0.85, 'rgba(167, 139, 250, 0.95)'); // Purple
       grad.addColorStop(1, 'rgba(244, 114, 182, 1)'); // Pink peak
 
+      let isStillMoving = isPlaying;
+
       for (let i = 0; i < barCount; i++) {
         let targetHeight = 0.08;
 
@@ -72,7 +74,11 @@ export default function AudioVisualizer({
         }
 
         // Smooth interpolation
-        simBars[i] += (targetHeight - simBars[i]) * 0.25;
+        const diff = targetHeight - simBars[i];
+        simBars[i] += diff * 0.25;
+        if (!isPlaying && Math.abs(diff) > 0.005) {
+          isStillMoving = true;
+        }
 
         const h = simBars[i] * (height - 8);
         const x = i * (barWidth + totalGap);
@@ -89,6 +95,13 @@ export default function AudioVisualizer({
           ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
           ctx.fillRect(x, Math.max(0, y - 2.5), barWidth, 1.5);
         }
+      }
+
+      if (isPlaying || (isStillMoving && settlingFrames < maxSettlingFrames)) {
+        if (!isPlaying) settlingFrames++;
+        animFrameIdRef.current = requestAnimationFrame(render);
+      } else {
+        animFrameIdRef.current = null;
       }
     };
 

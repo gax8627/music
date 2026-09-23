@@ -29,6 +29,11 @@ export const BoomerangVideoBg: React.FC<BoomerangVideoBgProps> = ({
   const isCapturingRef = useRef<boolean>(false);
   const isCompletedRef = useRef<boolean>(false);
   const fallbackTriggeredRef = useRef<boolean>(false);
+  const isBoomerangRef = useRef<boolean>(isBoomerang);
+  useEffect(() => {
+    isBoomerangRef.current = isBoomerang;
+  }, [isBoomerang]);
+  const savedPlaybackRateRef = useRef<number>(0.5);
 
   // Graceful fallback to looping native video element
   const triggerFallback = useCallback(() => {
@@ -198,17 +203,24 @@ export const BoomerangVideoBg: React.FC<BoomerangVideoBgProps> = ({
     video.defaultMuted = true;
     video.volume = 0;
     video.playbackRate = 0.5; // Way slower, cinematic ambient motion
+    savedPlaybackRateRef.current = 0.5;
 
     // On iOS WebKit, actively playing video elements can trigger a media session interruption
     // when the phone locks. Pause the background video whenever the page is hidden.
     const handleVisibilityChange = () => {
       if (document.hidden) {
         if (!video.paused) {
+          savedPlaybackRateRef.current = video.playbackRate || 0.5;
           video.pause();
         }
       } else {
-        if (!isCompletedRef.current && !isBoomerang && video.paused) {
-          video.play().catch(() => {});
+        if (!isCompletedRef.current && !isBoomerangRef.current && video.paused) {
+          video
+            .play()
+            .then(() => {
+              video.playbackRate = savedPlaybackRateRef.current || 0.5;
+            })
+            .catch(() => {});
         }
       }
     };
@@ -246,7 +258,7 @@ export const BoomerangVideoBg: React.FC<BoomerangVideoBgProps> = ({
       }
       video.pause();
     };
-  }, [src, captureCurrentFrame, handleVideoEnded, triggerFallback, isBoomerang]);
+  }, [src, captureCurrentFrame, handleVideoEnded, triggerFallback]);
 
   // Boomerang slow-motion ping-pong playback loop (10fps for ethereal dreaminess)
   useEffect(() => {

@@ -95,6 +95,23 @@ export default function App() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const currentTrack = tracks[currentIndex] || tracks[0];
 
+  const isPlayingRef = useRef(isPlaying);
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
+
+  const currentIndexRef = useRef(currentIndex);
+  useEffect(() => {
+    currentIndexRef.current = currentIndex;
+  }, [currentIndex]);
+
+  const tracksRef = useRef(tracks);
+  useEffect(() => {
+    tracksRef.current = tracks;
+  }, [tracks]);
+
+  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Save and increment real play count in state and localStorage
   const incrementRealPlayCount = useCallback((index: number) => {
     setTracks((prev) => {
@@ -130,10 +147,11 @@ export default function App() {
   // Central audio controller — synchronous src assignment to guarantee continuous auto-play on locked iPhone
   const selectSong = useCallback(
     (index: number, shouldPlay = true) => {
-      const target = tracks[index];
+      const target = tracksRef.current[index];
       if (!target) return;
 
-      const isSameTrack = index === currentIndex;
+      const isSameTrack = index === currentIndexRef.current;
+      currentIndexRef.current = index;
       setCurrentIndex(index);
 
       const audio = audioRef.current;
@@ -171,8 +189,9 @@ export default function App() {
         audio
           .play()
           .then(() => {
+            const wasPlaying = isPlayingRef.current;
             setIsPlaying(true);
-            if (!isSameTrack || !isPlaying) {
+            if (!isSameTrack || !wasPlaying) {
               incrementRealPlayCount(index);
             }
           })
@@ -185,7 +204,7 @@ export default function App() {
         setIsPlaying(false);
       }
     },
-    [tracks, currentIndex, isPlaying, incrementRealPlayCount]
+    [incrementRealPlayCount]
   );
 
   const [isShuffle, setIsShuffle] = useState(true);
@@ -209,17 +228,24 @@ export default function App() {
         playPromise
           .then(() => {
             setIsPlaying(true);
-            incrementRealPlayCount(currentIndex);
+            incrementRealPlayCount(currentIndexRef.current);
           })
           .catch(() => {
             // Browser requires a user gesture — unlock on first interaction
+            let unlocked = false;
             const unlockAutoplay = () => {
-              if (audioRef.current && !isPlaying) {
+              if (unlocked) return;
+              unlocked = true;
+              window.removeEventListener('pointerdown', unlockAutoplay);
+              window.removeEventListener('keydown', unlockAutoplay);
+              window.removeEventListener('touchstart', unlockAutoplay);
+
+              if (audioRef.current && !isPlayingRef.current) {
                 audioRef.current
                   .play()
                   .then(() => {
                     setIsPlaying(true);
-                    incrementRealPlayCount(currentIndex);
+                    incrementRealPlayCount(currentIndexRef.current);
                   })
                   .catch(() => {});
               }
@@ -280,23 +306,23 @@ export default function App() {
 
   // Shuffle mode toggle: toggle between ON and OFF
   const handleToggleShuffle = useCallback(() => {
-    setIsShuffle((prev) => {
-      const next = !prev;
-      if (next) {
-        // If turning shuffle ON, pick a random track and start playing
-        const availableIndices = tracks
-          .map((_, i) => i)
-          .filter((i) => i !== currentIndex);
-        const chosen =
-          availableIndices[Math.floor(Math.random() * availableIndices.length)] ?? 0;
-        playedInShuffleRef.current.clear();
-        playedInShuffleRef.current.add(chosen);
-        historyRef.current = [currentIndex, chosen];
-        selectSong(chosen, true);
-      }
-      return next;
-    });
-  }, [tracks, currentIndex, selectSong]);
+    const next = !isShuffle;
+    setIsShuffle(next);
+    if (next) {
+      // If turning shuffle ON, pick a random track and start playing
+      const currentIdx = currentIndexRef.current;
+      const currentTracks = tracksRef.current;
+      const availableIndices = currentTracks
+        .map((_, i) => i)
+        .filter((i) => i !== currentIdx);
+      const chosen =
+        availableIndices[Math.floor(Math.random() * availableIndices.length)] ?? 0;
+      playedInShuffleRef.current.clear();
+      playedInShuffleRef.current.add(chosen);
+      historyRef.current = [currentIdx, chosen];
+      selectSong(chosen, true);
+    }
+  }, [isShuffle, selectSong]);
 
   // Global keyboard shortcuts (Left/Right arrows, Space)
   useEffect(() => {
@@ -422,7 +448,7 @@ export default function App() {
     } catch (e) {
       console.warn('MediaSession handler warning:', e);
     }
-  }, [currentTrack, currentIndex, handleNext, handlePrev, selectSong]);
+  }, [currentTrack, currentIndex, handleNext, handlePrev, selectSong, isPrivateView]);
 
   // Synchronize playbackState with iOS lock screen
   useEffect(() => {
@@ -466,8 +492,8 @@ export default function App() {
 
   // Preload next upcoming track so iOS Safari has bytes buffered in cache ahead of time
   useEffect(() => {
-    const nextIdx = (currentIndex + 1) % tracks.length;
-    const nextTrack = tracks[nextIdx];
+    const nextIdx = (currentIndex + 1) % ALL_TRACKS.length;
+    const nextTrack = ALL_TRACKS[nextIdx];
     if (nextTrack?.src) {
       // Warm up Safari network cache without interrupting current audio
       if (typeof fetch !== 'undefined') {
@@ -483,12 +509,12 @@ export default function App() {
         }
       };
     }
-  }, [currentIndex, tracks]);
+  }, [currentIndex]);
 
   // On mount: decode ?s=<token> share links asynchronously.
   // Old ?song= sequential IDs are intentionally no longer accepted.
   useEffect(() => {
-    const allIds = tracks.map((t) => t.id);
+    const allIds = ALL_TRACKS.map((t) => t.id);
 
     const handleUrlRouting = async () => {
       const params = new URLSearchParams(window.location.search);
@@ -497,7 +523,7 @@ export default function App() {
       if (shareToken) {
         const songId = await decodeShareToken(shareToken, allIds);
         if (songId !== null) {
-          const foundIdx = tracks.findIndex((t) => t.id === songId);
+          const foundIdx = ALL_TRACKS.findIndex((t) => t.id === songId);
           if (foundIdx !== -1) {
             setCurrentIndex(foundIdx);
             setIsPrivateView(true);
@@ -512,7 +538,7 @@ export default function App() {
       // Legacy #song- hash support (kept for backwards compat with old bookmark-style links)
       if (window.location.hash.startsWith('#song-')) {
         const hashId = window.location.hash.replace('#song-', '');
-        const foundIdx = tracks.findIndex((t) => t.id === hashId);
+        const foundIdx = ALL_TRACKS.findIndex((t) => t.id === hashId);
         if (foundIdx !== -1) {
           setCurrentIndex(foundIdx);
           setIsPrivateView(true);
@@ -521,8 +547,7 @@ export default function App() {
     };
 
     handleUrlRouting();
-    // Note: popstate is not needed since we use pushState, not hash navigation
-  }, [tracks]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   // Keep URL updated when navigating tracks while in private view (async token generation)
   useEffect(() => {
@@ -539,11 +564,14 @@ export default function App() {
   // Share song: generate token URL (with readable slug) and copy to clipboard
   const handleShare = useCallback((songId: string) => {
     const triggerToast = () => {
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current);
+      }
       setCopiedToast(true);
-      setTimeout(() => setCopiedToast(false), 2500);
+      toastTimeoutRef.current = setTimeout(() => setCopiedToast(false), 2500);
     };
 
-    const track = tracks.find((t) => t.id === songId);
+    const track = tracksRef.current.find((t) => t.id === songId);
     const title = track?.title ?? songId;
 
     buildShareUrl(songId, title).then((shareUrl) => {

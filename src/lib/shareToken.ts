@@ -26,8 +26,31 @@ async function hashToken(songId: string): Promise<string> {
 }
 
 function hashTokenSync(songId: string): string {
-  const raw = SHARE_SALT + songId;
-  return btoa(raw).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '').slice(0, TOKEN_LENGTH);
+  console.warn('[shareToken] Subtle crypto unavailable; using fallback hash algorithm');
+  let h1 = 0x811c9dc5;
+  let h2 = 0x01000193;
+  let h3 = 0x9e3779b9;
+  const str = `${SHARE_SALT}:${songId}:${SHARE_SALT}`;
+  for (let i = 0; i < str.length; i++) {
+    const code = str.charCodeAt(i);
+    h1 = Math.imul(h1 ^ code, 0x01000193);
+    h2 = Math.imul(h2 ^ (code + i), 0x5bd1e995);
+    h3 = Math.imul(h3 ^ (code * 31), 0x27d4eb2d);
+  }
+  const u8 = new Uint8Array(9);
+  const v1 = h1 >>> 0;
+  const v2 = h2 >>> 0;
+  const v3 = h3 >>> 0;
+  u8[0] = (v1 >> 24) & 0xff;
+  u8[1] = (v1 >> 16) & 0xff;
+  u8[2] = (v1 >> 8) & 0xff;
+  u8[3] = v1 & 0xff;
+  u8[4] = (v2 >> 16) & 0xff;
+  u8[5] = (v2 >> 8) & 0xff;
+  u8[6] = v2 & 0xff;
+  u8[7] = (v3 >> 8) & 0xff;
+  u8[8] = v3 & 0xff;
+  return toBase64Url(u8).slice(0, TOKEN_LENGTH);
 }
 
 const isCryptoAvailable =
@@ -74,6 +97,9 @@ export async function decodeShareToken(
   // Support both "slug.token" and plain "token" formats
   const dotIdx = value.lastIndexOf('.');
   const token = dotIdx !== -1 ? value.slice(dotIdx + 1) : value;
+  if (!token || token.length !== TOKEN_LENGTH) {
+    return null;
+  }
 
   for (const id of allSongIds) {
     const candidate = isCryptoAvailable ? await hashToken(id) : hashTokenSync(id);
@@ -88,7 +114,7 @@ export async function decodeShareToken(
  */
 export async function buildShareUrl(songId: string, title: string): Promise<string> {
   const token = await encodeShareToken(songId);
-  const slug = slugify(title);
+  const slug = encodeURIComponent(slugify(title));
   const base = `${window.location.origin}${window.location.pathname}`;
   return `${base}?s=${slug}.${token}`;
 }

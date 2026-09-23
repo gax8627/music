@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 import { motion } from 'framer-motion';
 
 export type VisualizerArchetype =
@@ -437,6 +437,7 @@ const AnalogSineVisualizer: React.FC<{
   config: VisualizerConfig;
   size: 'sm' | 'md' | 'lg';
 }> = ({ isPlaying, config, size }) => {
+  const gradId = useId();
   return (
     <div className="relative w-full h-full flex items-center justify-center px-1">
       {size !== 'sm' && (
@@ -452,7 +453,7 @@ const AnalogSineVisualizer: React.FC<{
         preserveAspectRatio="none"
       >
         <defs>
-          <linearGradient id={`grad-${config.glowColor.replace('#', '')}`} x1="0%" y1="0%" x2="100%" y2="0%">
+          <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor={config.glowColor} stopOpacity="0.3" />
             <stop offset="50%" stopColor={config.accentColor} stopOpacity="1" />
             <stop offset="100%" stopColor={config.glowColor} stopOpacity="0.3" />
@@ -466,7 +467,7 @@ const AnalogSineVisualizer: React.FC<{
               : 'M 0 25 Q 15 15, 30 25 T 60 25 T 85 25 T 100 25'
           }
           fill="none"
-          stroke={`url(#grad-${config.glowColor.replace('#', '')})`}
+          stroke={`url(#${gradId})`}
           strokeWidth={size === 'lg' ? '3' : '2'}
           strokeLinecap="round"
           animate={
@@ -633,6 +634,7 @@ const HorizonFluxVisualizer: React.FC<{
   config: VisualizerConfig;
   size: 'sm' | 'md' | 'lg';
 }> = ({ isPlaying, config, size }) => {
+  const fluxId = useId();
   return (
     <div className="relative w-full h-full flex items-end justify-center overflow-hidden">
       <svg
@@ -641,7 +643,7 @@ const HorizonFluxVisualizer: React.FC<{
         preserveAspectRatio="none"
       >
         <defs>
-          <linearGradient id={`flux-${config.glowColor.replace('#', '')}`} x1="0" y1="0" x2="0" y2="1">
+          <linearGradient id={fluxId} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor={config.accentColor} stopOpacity="0.8" />
             <stop offset="100%" stopColor={config.glowColor} stopOpacity="0.05" />
           </linearGradient>
@@ -667,7 +669,7 @@ const HorizonFluxVisualizer: React.FC<{
 
         <motion.path
           d="M 0 60 L 0 42 Q 25 22, 55 35 T 120 25 L 120 60 Z"
-          fill={`url(#flux-${config.glowColor.replace('#', '')})`}
+          fill={`url(#${fluxId})`}
           stroke={config.accentColor}
           strokeWidth={size === 'lg' ? '2' : '1.5'}
           animate={

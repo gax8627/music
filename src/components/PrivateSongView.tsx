@@ -284,7 +284,7 @@ export const PrivateSongView: React.FC<PrivateSongViewProps> = ({
           {/* Right: Repeat Track Toggle */}
           <button
             type="button"
-            onClick={onToggleLoopForever}
+            onClick={() => onToggleLoopForever?.()}
             aria-label={isLoopForever ? 'Repeat Track is ON' : 'Repeat Track is OFF'}
             title={isLoopForever ? 'Repeat Track is ON (Click to turn off)' : 'Repeat Track is OFF (Click to turn on)'}
             className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all cursor-pointer ${
