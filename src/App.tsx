@@ -212,10 +212,13 @@ export default function App() {
   const historyRef = useRef<number[]>([currentIndex]);
   const playedInShuffleRef = useRef<Set<number>>(new Set([currentIndex]));
 
+  // Shared links resolve their track asynchronously; don't autoplay the random placeholder track.
+  const startedPrivateRef = useRef(isPrivateView);
+
   // Load initial track and attempt automatic playback
   useEffect(() => {
     const audio = audioRef.current;
-    if (!audio || !currentTrack?.src) return;
+    if (!audio || !currentTrack?.src || startedPrivateRef.current) return;
 
     const initPath = (() => { try { return new URL(audio.src).pathname; } catch { return audio.src; } })();
     if (initPath !== currentTrack.src) {
@@ -516,34 +519,51 @@ export default function App() {
   useEffect(() => {
     const allIds = ALL_TRACKS.map((t) => t.id);
 
+    // Point the shared audio element at a track (autoplay may be blocked; user can press play).
+    const loadAndPlay = (idx: number) => {
+      currentIndexRef.current = idx;
+      setCurrentIndex(idx);
+      historyRef.current = [idx];
+      playedInShuffleRef.current = new Set([idx]);
+      const audio = audioRef.current;
+      const src = ALL_TRACKS[idx].src;
+      if (!audio || !src) return;
+      audio.src = src;
+      audio
+        .play()
+        .then(() => {
+          setIsPlaying(true);
+          incrementRealPlayCount(idx);
+        })
+        .catch(() => {});
+    };
+
     const handleUrlRouting = async () => {
       const params = new URLSearchParams(window.location.search);
       const shareToken = params.get('s');
+      let foundIdx = -1;
 
       if (shareToken) {
         const songId = await decodeShareToken(shareToken, allIds);
-        if (songId !== null) {
-          const foundIdx = ALL_TRACKS.findIndex((t) => t.id === songId);
-          if (foundIdx !== -1) {
-            setCurrentIndex(foundIdx);
-            setIsPrivateView(true);
-            return;
-          }
-        }
-        // Invalid token — clear the bad URL and stay on main page
-        window.history.replaceState(null, '', window.location.pathname);
+        if (songId !== null) foundIdx = ALL_TRACKS.findIndex((t) => t.id === songId);
+      } else if (window.location.hash.startsWith('#song-')) {
+        // Legacy #song- hash support (kept for backwards compat with old bookmark-style links)
+        const hashId = window.location.hash.replace('#song-', '');
+        foundIdx = ALL_TRACKS.findIndex((t) => t.id === hashId);
+      } else {
         return;
       }
 
-      // Legacy #song- hash support (kept for backwards compat with old bookmark-style links)
-      if (window.location.hash.startsWith('#song-')) {
-        const hashId = window.location.hash.replace('#song-', '');
-        const foundIdx = ALL_TRACKS.findIndex((t) => t.id === hashId);
-        if (foundIdx !== -1) {
-          setCurrentIndex(foundIdx);
-          setIsPrivateView(true);
-        }
+      if (foundIdx !== -1) {
+        setIsPrivateView(true);
+        loadAndPlay(foundIdx);
+        return;
       }
+
+      // Invalid token/hash — clear the bad URL and fall back to the main page
+      window.history.replaceState(null, '', window.location.pathname);
+      setIsPrivateView(false);
+      loadAndPlay(currentIndexRef.current);
     };
 
     handleUrlRouting();
