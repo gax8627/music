@@ -611,6 +611,25 @@ export const tracks: Track[] = [
     "edition": "Demo",
     "currentTime": 0,
     "liked": false
+  },
+  {
+    "id": "32",
+    "title": "Conexión Extrema",
+    "artist": "RG Music",
+    "duration": 145,
+    "durationFormatted": "02:25",
+    "createdDate": "Oct 26, 2026",
+    "createdDateISO": "2026-10-26",
+    "plays": 0,
+    "playsFormatted": "0 plays",
+    "bgGradient": "#dcfce7",
+    "cover": "",
+    "src": "/audio/track34.mp3",
+    "headerText": "CONEXIÓN EXTREMA",
+    "subText": "Created: Oct 26, 2026",
+    "edition": "Demo",
+    "currentTime": 0,
+    "liked": false
   }
 ];
 
@@ -618,9 +637,9 @@ export const TRACKS: Track[] = tracks;
 export const SONGS: Song[] = tracks;
 export const songs: Song[] = tracks;
 
-export const TOTAL_SONGS = 31;
-export const TOTAL_SECONDS = 5256;
-export const TOTAL_DURATION_LABEL = '1h 27m';
+export const TOTAL_SONGS = 32;
+export const TOTAL_SECONDS = 5401;
+export const TOTAL_DURATION_LABEL = '1h 30m';
 
 export function formatTotalDuration(seconds: number = TOTAL_SECONDS): string {
   const h = Math.floor(seconds / 3600);

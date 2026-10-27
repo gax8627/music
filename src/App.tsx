@@ -713,7 +713,7 @@ export default function App() {
             />
           </section>
 
-          {/* Chronological List of All 31 Songs */}
+          {/* Chronological List of All Songs */}
           <section className="w-full">
             <SongList
               songs={tracks}
