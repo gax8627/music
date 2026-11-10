@@ -668,6 +668,25 @@ export const tracks: Track[] = [
     "edition": "Demo",
     "currentTime": 0,
     "liked": false
+  },
+  {
+    "id": "35",
+    "title": "Sentimientos",
+    "artist": "RG Music",
+    "duration": 175,
+    "durationFormatted": "02:55",
+    "createdDate": "Nov 4, 2026",
+    "createdDateISO": "2026-11-04",
+    "plays": 0,
+    "playsFormatted": "0 plays",
+    "bgGradient": "#ecfdf5",
+    "cover": "",
+    "src": "/audio/track37.mp3",
+    "headerText": "SENTIMIENTOS",
+    "subText": "Created: Nov 4, 2026",
+    "edition": "Demo",
+    "currentTime": 0,
+    "liked": false
   }
 ];
 
@@ -675,9 +694,9 @@ export const TRACKS: Track[] = tracks;
 export const SONGS: Song[] = tracks;
 export const songs: Song[] = tracks;
 
-export const TOTAL_SONGS = 34;
-export const TOTAL_SECONDS = 5754;
-export const TOTAL_DURATION_LABEL = '1h 35m';
+export const TOTAL_SONGS = 35;
+export const TOTAL_SECONDS = 5929;
+export const TOTAL_DURATION_LABEL = '1h 38m';
 
 export function formatTotalDuration(seconds: number = TOTAL_SECONDS): string {
   const h = Math.floor(seconds / 3600);

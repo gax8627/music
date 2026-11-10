@@ -293,6 +293,14 @@ export const TRACK_VISUALIZER_CONFIGS: Record<number, VisualizerConfig> = {
     accentColor: '#c084fc',
     ringCount: 3,
   },
+  35: {
+    archetype: 'analog-sine',
+    label: 'PSYCHEDELIC SINE',
+    gradientClass: 'from-emerald-400 via-teal-600 to-indigo-800',
+    glowColor: '#059669',
+    accentColor: '#34d399',
+    waveCount: 3,
+  },
 };
 
 export function getVisualizerConfig(trackNumber: number | string): VisualizerConfig {
@@ -306,7 +314,7 @@ export function getVisualizerConfig(trackNumber: number | string): VisualizerCon
   for (let i = 0; i < str.length; i++) {
     hash = (hash << 5) - hash + str.charCodeAt(i);
   }
-  const fallbackId = (Math.abs(hash) % 34) + 1;
+  const fallbackId = (Math.abs(hash) % 35) + 1;
   return TRACK_VISUALIZER_CONFIGS[fallbackId] || TRACK_VISUALIZER_CONFIGS[1];
 }
 
