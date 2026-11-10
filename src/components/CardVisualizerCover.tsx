@@ -277,6 +277,22 @@ export const TRACK_VISUALIZER_CONFIGS: Record<number, VisualizerConfig> = {
     glowColor: '#ca8a04',
     accentColor: '#facc15',
   },
+  33: {
+    archetype: 'spectrum',
+    label: 'LOBA SPECTRUM',
+    gradientClass: 'from-amber-500 via-rose-600 to-purple-800',
+    glowColor: '#e11d48',
+    accentColor: '#fb7185',
+    barCount: 14,
+  },
+  34: {
+    archetype: 'radial-orbit',
+    label: 'ORBITAL HARMONY',
+    gradientClass: 'from-pink-500 via-purple-600 to-indigo-800',
+    glowColor: '#9333ea',
+    accentColor: '#c084fc',
+    ringCount: 3,
+  },
 };
 
 export function getVisualizerConfig(trackNumber: number | string): VisualizerConfig {
@@ -290,7 +306,7 @@ export function getVisualizerConfig(trackNumber: number | string): VisualizerCon
   for (let i = 0; i < str.length; i++) {
     hash = (hash << 5) - hash + str.charCodeAt(i);
   }
-  const fallbackId = (Math.abs(hash) % 32) + 1;
+  const fallbackId = (Math.abs(hash) % 34) + 1;
   return TRACK_VISUALIZER_CONFIGS[fallbackId] || TRACK_VISUALIZER_CONFIGS[1];
 }
 

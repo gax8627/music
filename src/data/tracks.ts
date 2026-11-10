@@ -630,6 +630,44 @@ export const tracks: Track[] = [
     "edition": "Demo",
     "currentTime": 0,
     "liked": false
+  },
+  {
+    "id": "33",
+    "title": "Loba Solitaria",
+    "artist": "RG Music",
+    "duration": 176,
+    "durationFormatted": "02:56",
+    "createdDate": "Nov 10, 2026",
+    "createdDateISO": "2026-11-10",
+    "plays": 0,
+    "playsFormatted": "0 plays",
+    "bgGradient": "#ffe4e6",
+    "cover": "",
+    "src": "/audio/track35.mp3",
+    "headerText": "LOBA SOLITARIA",
+    "subText": "Created: Nov 10, 2026",
+    "edition": "Demo",
+    "currentTime": 0,
+    "liked": false
+  },
+  {
+    "id": "34",
+    "title": "Estábamos (Female Vocal)",
+    "artist": "RG Music",
+    "duration": 177,
+    "durationFormatted": "02:57",
+    "createdDate": "Oct 9, 2026",
+    "createdDateISO": "2026-10-09",
+    "plays": 0,
+    "playsFormatted": "0 plays",
+    "bgGradient": "#f3e8ff",
+    "cover": "",
+    "src": "/audio/track36.mp3",
+    "headerText": "ESTÁBAMOS (FEMALE VOCAL)",
+    "subText": "Created: Oct 9, 2026",
+    "edition": "Demo",
+    "currentTime": 0,
+    "liked": false
   }
 ];
 
@@ -637,9 +675,9 @@ export const TRACKS: Track[] = tracks;
 export const SONGS: Song[] = tracks;
 export const songs: Song[] = tracks;
 
-export const TOTAL_SONGS = 32;
-export const TOTAL_SECONDS = 5401;
-export const TOTAL_DURATION_LABEL = '1h 30m';
+export const TOTAL_SONGS = 34;
+export const TOTAL_SECONDS = 5754;
+export const TOTAL_DURATION_LABEL = '1h 35m';
 
 export function formatTotalDuration(seconds: number = TOTAL_SECONDS): string {
   const h = Math.floor(seconds / 3600);
