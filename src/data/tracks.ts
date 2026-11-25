@@ -687,6 +687,25 @@ export const tracks: Track[] = [
     "edition": "Demo",
     "currentTime": 0,
     "liked": false
+  },
+  {
+    "id": "36",
+    "title": "Not That Good Anymore",
+    "artist": "RG Music",
+    "duration": 150,
+    "durationFormatted": "02:30",
+    "createdDate": "Nov 25, 2026",
+    "createdDateISO": "2026-11-25",
+    "plays": 0,
+    "playsFormatted": "0 plays",
+    "bgGradient": "#e0e7ff",
+    "cover": "",
+    "src": "/audio/track38.mp3",
+    "headerText": "NOT THAT GOOD ANYMORE",
+    "subText": "Created: Nov 25, 2026",
+    "edition": "Demo",
+    "currentTime": 0,
+    "liked": false
   }
 ];
 
@@ -694,9 +713,9 @@ export const TRACKS: Track[] = tracks;
 export const SONGS: Song[] = tracks;
 export const songs: Song[] = tracks;
 
-export const TOTAL_SONGS = 35;
-export const TOTAL_SECONDS = 5929;
-export const TOTAL_DURATION_LABEL = '1h 38m';
+export const TOTAL_SONGS = 36;
+export const TOTAL_SECONDS = 6079;
+export const TOTAL_DURATION_LABEL = '1h 41m';
 
 export function formatTotalDuration(seconds: number = TOTAL_SECONDS): string {
   const h = Math.floor(seconds / 3600);
